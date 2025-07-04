@@ -64,7 +64,7 @@ export function autoIncrement<T extends Document>(
     // Si el documento es nuevo y el campo no está definido (o es 0), lo autoincrementamos
     if (this.isNew && (!this[field as keyof T] || (this[field as keyof T] as any) === 0)) {
       // Determina el nombre de la colección/modelo para el contador
-      const collectionName = model || this.constructor.modelName;
+      const collectionName = model || (this.constructor as any).modelName || this.collection.name;
 
       try {
         const counter = await counterMongooseModel.findByIdAndUpdate(
