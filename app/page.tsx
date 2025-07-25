@@ -7,6 +7,7 @@ export default async function Home() {
 
   const user = await getSession();
 
+  console.log(user)
   if (user) {
     redirect("/dashboard")
   } 

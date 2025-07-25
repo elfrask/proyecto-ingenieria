@@ -1,4 +1,4 @@
-
+"use server"
 import { cookies } from "next/headers";
 import { User } from "./db";
 import bcrypt from "bcrypt";
@@ -10,15 +10,32 @@ export interface Session {
   role: string;
 }
 
+export interface LoginResult<T> {
+    success?: boolean,
+    error?: number,
+    msg?: string,
+    isLogin?: T
+}
+
 // Iniciar sesión y guardar en cookie
-export async function login(user: string, pass: string): Promise<Session | null> {
-  const found = await User.findOne({ user });
-  if (!found) return null;
-  const valid = await bcrypt.compare(pass, found.pass);
-  if (!valid) return null;
-  const session: Session = { user: found.user, role: found.role };
+export async function login(user: string, pass: string): Promise<LoginResult<boolean>> {
+
+    let session: Session = {user:"", role:""};
+
+    if (user === "admin") {
+        if (pass !== process.env.ADMIN_PASS) return { success: false, isLogin: false, error:1, msg:"la contraseña es incorrecta" };
+        session = {user: "admin", role: "admin"};
+    } else {
+        const found = await User.findOne({ user });
+        if (!found) return { success: false, isLogin: false, error:1, msg:"el usuario no existe" };
+        const valid = await bcrypt.compare(pass, found.pass);
+        if (!valid) return { success: false, isLogin: false, error:2, msg:"la contraseña es incorrecta" };
+        session = { user: found.user, role: found.role };
+
+    }
+
   (await cookies()).set(COOKIE_NAME, JSON.stringify(session), { httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 });
-  return session;
+  return { success: true, isLogin: true, error:1, msg:"Haz iniciado session correctamente" };;
 }
 
 // Obtener sesión desde cookie

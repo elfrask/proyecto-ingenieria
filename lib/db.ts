@@ -1,10 +1,10 @@
-import mongoose, {model, connect, Schema} from  "mongoose";
+import mongoose, {model, connect, Schema, Model} from  "mongoose";
 import {autoIncrement, initializeCounterModel} from "./mongooseAutoincrement";
-
+import {IMarker, IMinute, IMinuteType, IUser} from "./db-types"
 if (!process.env.MONGO_URI) {
     throw new Error("MONGO_URI environment variable is not defined");
 }
-connect(process.env.MONGO_URI as string);
+mongoose.connect(process.env.MONGO_URI as string);
 
 const UserSchema = new Schema({
     user: {
@@ -17,11 +17,55 @@ const UserSchema = new Schema({
         required: true,
     },
     role: String,
-})
+});
 
+const MinuteTypeSchema = new Schema({
+    id: Number,
+    caption: String,
+    typeName: String,
+    fields: Array
+});
 
+const MarkerSchema = new Schema({
+    id: Number,
+    subject: String,
+    description: String,
+    reference: String,
+    report_date: {
+        type: Date,
+        required: true,
+    },
+    lng: Number,
+    lat: Number,
+});
+
+// Aplica el plugin de autoincremento al campo 'id' de Marker
+autoIncrement(MarkerSchema, { field: "id", model: "Marker" });
+
+const MinuteSchema = new Schema({
+    id: Number,
+    title: String,
+    description: String,
+    type: String,
+    marker_id: Number,
+    fields: Object
+});
+
+// Aplica el plugin de autoincremento al campo 'id' de SimpleMinute
+autoIncrement(MinuteSchema, { field: "id", model: "Minute" });
+autoIncrement(MinuteTypeSchema, { field: "id", model: "MinuteType" });
+
+function ExportModel<T = Document>(nameModel: string, schema: Schema): Model<T> {
+    
+    const MODEL: Model<T> =
+        (mongoose.models[nameModel] as Model<T>) || mongoose.model<T>(nameModel, schema);
+    
+    return MODEL
+}
 
 // Evita la recompilación de modelos en desarrollo con Next.js
-const User = mongoose.models.User || model("User", UserSchema);
 
-export { User };
+export const User = ExportModel<IUser>("User", UserSchema);
+export const Marker = ExportModel<IMarker>("Marker", MarkerSchema);
+export const Minute = ExportModel<IMinute>("Minute", MinuteSchema);
+export const MinuteType = ExportModel<IMinuteType>("MinuteType", MinuteTypeSchema);
