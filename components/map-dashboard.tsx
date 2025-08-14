@@ -33,9 +33,20 @@ import { Form } from "./ui/form";
 import z from "zod";
 import { toast } from "sonner";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
 import { getAllMinuteTypes } from "@/lib/minute-actions";
 import { Textarea } from "./ui/textarea";
+import type { RootFilterQuery } from "mongoose";
+import { Calendar } from "./ui/calendar";
+import { InputCalendar } from "./input-calendar";
+import { range } from "@/lib/utils";
+// import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+// import { Button } from "./ui/button";
+// import React, { ReactNode, useState } from "react";
+import * as LucideIcons from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import ConfigPage from "./config-page";
+import ButtonFloat from "./button-float";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
@@ -611,17 +622,54 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
     )
 }
 
+const yearRange = [2000, 2050]
+
 
 
 export function MainPage() {
     const [markers, setMarkers] = useState<Mrk[]>([]); // Estado para guardar las posiciones de los marcadores
     const [globalMap, setGlobalMap] = useState<L.Map | null>(null);
 
+    const [TypeFilterTime, setTypeFilterTime] = useState<"mouth" | "day" | "period" | "year" | "all">("day")
+    const thisDate = new Date();
+    const [initialFilterTime, setInitialFilterTime] = useState<Date>(new Date(thisDate.getFullYear(), thisDate.getMonth(), thisDate.getDate(), 0, 0, 0, 0));
+    const [dueFilterTime, setDueFilterTime] = useState<Date>(new Date(thisDate.getFullYear(), thisDate.getMonth(), thisDate.getDate() + 1, 0, 0, 0, 0));
+
+    const [mouthFilter, setMouthFilter] = useState(thisDate.getMonth());
+    const [yearFilter, setYearFilter] = useState(thisDate.getFullYear());
+
+
     const clickedLatLngRef = useRef<L.LatLng | null>(null);
     const route = useRouter()
 
     const [createMarkerDialogOpen, setCreateMarkerDialogOpen] = useState(false)
     // Estado para la visibilidad del menú contextual
+
+    function setPeriodByMonthAndYear() {
+
+        let start: Date, end: Date;
+
+        if (TypeFilterTime === "mouth") {
+            // Toma los valores actuales de mouthFilter y yearFilter del estado
+            start = new Date(yearFilter, mouthFilter, 1, 0, 0, 0, 0);
+            // El final es el último día del mes, a las 23:59:59.999
+            end = new Date(yearFilter, mouthFilter + 1, 0, 23, 59, 59, 999);
+
+            setInitialFilterTime(start);
+            setDueFilterTime(end);
+        } else if (TypeFilterTime === "year") {
+            // Toma los valores actuales de mouthFilter y yearFilter del estado
+            start = new Date(yearFilter, 0, 1, 0, 0, 0, 0);
+            // El final es el último día del mes, a las 23:59:59.999
+            end = new Date(yearFilter + 1, 0, 1, 0, 0, 0, 0);
+
+            setInitialFilterTime(start);
+            setDueFilterTime(end);
+        }
+
+
+        // loadData();
+    }
 
     async function loadData() {
         const user = await getSession();
@@ -630,7 +678,25 @@ export function MainPage() {
             route.push("/")
         }
 
-        const Markers = await getAllMarkers({});
+        let filterMarker: RootFilterQuery<Mrk> = {};
+
+        // console.log(TypeFilterTime, [initialFilterTime, dueFilterTime])
+
+        if (TypeFilterTime !== "all") {
+
+            filterMarker = {
+                ...filterMarker,
+                report_date: {
+                    $gte: initialFilterTime,
+                    $lte: dueFilterTime
+                }
+            }
+        }
+
+
+
+
+        const Markers = await getAllMarkers(filterMarker);
         if (Markers.result) {
             setMarkers(Markers.result)
 
@@ -640,6 +706,14 @@ export function MainPage() {
     useEffect(() => {
         loadData()
     }, [])
+
+    useEffect(() => {
+        loadData()
+    }, [initialFilterTime, dueFilterTime, TypeFilterTime])
+
+    useEffect(() => {
+        setPeriodByMonthAndYear();
+    }, [yearFilter, mouthFilter, TypeFilterTime])
 
     function HandlerMap() {
         const map = useMap(); // Obtiene la instancia de Leaflet Map
@@ -811,14 +885,229 @@ export function MainPage() {
                 </DialogContent>
             </Dialog>
 
-            <div className="fixed left-12 top-0 mt-2.5 h-16 border border-gray-500 z-10" style={{
-                width: "calc(100vw - 3.5rem)"
-            }}>
+            <div className="
+            fixed left-12 top-0 mt-2.5 min-h-16 border 
+            bg-accent text-accent-foreground border-gray-500 
+            z-10 flex flex-row flex-wrap justify-between rounded-2xl"
+                style={{
+                    width: "calc(100vw - 3.5rem)"
+                }}>
+                <div className="
+                min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
+                flex-wrap p-2 items-center
+                ">
+                    <Select value={TypeFilterTime} onValueChange={x => setTypeFilterTime(x as any)} >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Periodo no definido" className="w-auto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectLabel>Periodo</SelectLabel>
+                                <SelectItem value="day">Por Fecha</SelectItem>
+                                <SelectItem value="mouth">Por Mes</SelectItem>
+                                <SelectItem value="year">Por Año</SelectItem>
+                                <SelectItem value="period">Por Periodo</SelectItem>
+                                <SelectItem value="all">Todo</SelectItem>
+                                {/* <SelectItem value="period">Por Periodo</SelectItem> */}
+
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <div className="flex h-auto w-auto pl-3 flex-row space-x-2 *:space-y-1">
+                        {
+                            TypeFilterTime === "day" &&
+                            <>
+                                <div>
+                                    <Label>
+                                        Fecha:
+                                    </Label>
+                                    <InputCalendar defaultValue={thisDate} onChangeValue={x => { //Busca el bug de la comparacion de fechas (-1 dia)
+
+                                        setInitialFilterTime(x);
+
+
+                                        // const final = new Date(
+                                        //     x.getFullYear(),
+                                        //     x.getMonth(),
+                                        //     x.getDate(),
+                                        //     23, 59, 59, 999
+                                        // )
+
+                                        const final = new Date(x);
+                                        final.setDate(final.getDate() + 1);
+
+                                        // console.log()
+
+
+                                        setDueFilterTime(
+                                            final
+                                        );
+
+                                        // loadData();
+                                    }} />
+
+                                </div>
+                            </>
+                        }
+
+                        {
+                            TypeFilterTime === "mouth" &&
+                            <>
+                                <div>
+                                    <Label>
+                                        Año:
+                                    </Label>
+                                    <Select defaultValue={yearFilter + ""} onValueChange={x => { setYearFilter(parseInt(x)) }}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Año" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+
+                                                {
+                                                    range(yearRange[0], yearRange[1]).map(x => {
+
+
+                                                        return (
+                                                            <SelectItem key={x} value={x + ""}>{x}</SelectItem>
+                                                        )
+                                                    })
+                                                }
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+
+                                </div>
+                                <div>
+                                    <Label>
+                                        Mes:
+                                    </Label>
+                                    <Select defaultValue={mouthFilter + ""} onValueChange={x => { setMouthFilter(parseInt(x)) }}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Mes" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+
+                                                {
+                                                    [
+                                                        "Enero",
+                                                        "Febrero",
+                                                        "Marzo",
+                                                        "Abril",
+                                                        "Mayo",
+                                                        "Junio",
+                                                        "Julio",
+                                                        "Agosto",
+                                                        "Septiembre",
+                                                        "Octubre",
+                                                        "Noviembre",
+                                                        "Diciembre"
+                                                    ].map((x, i) => {
+
+
+                                                        return (
+                                                            <SelectItem key={x} value={i + ""}>{x}</SelectItem>
+                                                        )
+                                                    })
+                                                }
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+
+                                </div>
+                            </>
+                        }
+
+                        {
+                            TypeFilterTime === "year" &&
+                            <>
+                                <div>
+                                    <Label>
+                                        Año:
+                                    </Label>
+                                    <Select defaultValue={yearFilter + ""} onValueChange={x => { setYearFilter(parseInt(x)) }}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Año" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+
+                                                {
+                                                    range(yearRange[0], yearRange[1]).map(x => {
+
+
+                                                        return (
+                                                            <SelectItem key={x} value={x + ""}>{x}</SelectItem>
+                                                        )
+                                                    })
+                                                }
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+
+                                </div>
+                            </>
+                        }
+
+                        {
+                            TypeFilterTime === "period" &&
+                            <>
+                                <div>
+                                    <Label>
+                                        Fecha de inicio:
+                                    </Label>
+                                    <InputCalendar defaultValue={initialFilterTime} onChangeValue={x => setInitialFilterTime(x)} />
+
+                                </div>
+
+                                <div>
+                                    <Label>
+                                        Fecha final:
+                                    </Label>
+                                    <InputCalendar defaultValue={dueFilterTime} onChangeValue={x => setDueFilterTime(new Date(
+                                        x.getFullYear(),
+                                        x.getMonth(),
+                                        x.getDate(),
+                                        23, 59, 59, 999
+                                    ))} />
+
+                                </div>
+                            </>
+                        }
+
+                    </div>
+                </div>
+                <div className="
+                min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
+                flex-wrap p-2 items-center
+                ">
+
+                </div>
 
             </div>
+
+            <ButtonFloat icon="Settings" className="" size={50} bgColor="#000">
+                <DialogHeader>
+                    <DialogTitle>
+                        Configuraciones
+                    </DialogTitle>
+                    <DialogDescription>
+                        Panel de configuraciones, aqui puedes configurar todos los aspectos del sistema
+                    </DialogDescription>
+                </DialogHeader>
+                <ConfigPage>
+
+                </ConfigPage>
+            </ButtonFloat> 
         </div>
     )
 }
+
+
+
+
+
 
 export default function MapDashboard() {
     return (

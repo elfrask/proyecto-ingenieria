@@ -1,4 +1,4 @@
-import mongoose, {model, connect, Schema, Model} from  "mongoose";
+import mongoose, {model, connect, Schema, Model, RootFilterQuery} from  "mongoose";
 import {autoIncrement, initializeCounterModel} from "./mongooseAutoincrement";
 import {IMarker, IMinute, IMinuteType, IUser} from "./db-types"
 if (!process.env.MONGO_URI) {
