@@ -19,7 +19,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { IMarker, IMinuteType } from "@/lib/db-types";
+import { IMarker, IMinuteType, typesFields } from "@/lib/db-types";
 import { createMarker, createMinute, deleteMarker, deleteMinute, getAllMarkers, getAllMinutes, getMarker, getMinute, Minute, Marker as Mrk, updateMarker, updateMinute } from "@/lib/map-actions";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -47,6 +47,7 @@ import * as LucideIcons from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import ConfigPage from "./config-page";
 import ButtonFloat from "./button-float";
+import { CustomFieldRender, CustomFieldValueType } from "./custom-fields";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
@@ -106,6 +107,17 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
     const [minuteValue, setMinuteValue] = useState(minute);
     const [minuteTypes, setMinuteTypes] = useState<IMinuteType[]>([]);
     const [loadingTypes, setLoadingTypes] = useState(false);
+    const [TypeInstance, setTypeInstance] = useState<IMinuteType|null>(null)
+
+    // const TypeInstance = minuteValue.type
+
+    useEffect(() => {
+        minuteTypes.forEach(x=> {
+            if (x.typeName === minuteValue.type) {
+                setTypeInstance(x)
+            };
+        });
+    }, [minuteValue.type, minuteTypes])
 
     async function loadMinuteTypes() {
         setLoadingTypes(true);
@@ -134,6 +146,17 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
     useEffect(() => {
         loadMinuteTypes();
     }, []);
+
+    function setFieldData(value: CustomFieldValueType, NAME: string, type: (typeof typesFields)[number]["type"]) {
+        
+        setMinuteValue({
+            ...minuteValue,
+            fields:{
+                ...minuteValue.fields,
+                [NAME]: value,
+            }
+        })
+    }
 
     return (
         <form
@@ -193,9 +216,33 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
                     </SelectContent>
                 </Select>
             </div>
-            <Label>
-                Estructuras de formularios en desarrollo
-            </Label>
+            <div>
+                {
+                    TypeInstance?.fields.map((x, i)=> {
+                        
+                        const value = (minuteValue?.fields||{})[x.name];
+
+                        return(
+                            <div className="space-y-2">
+                                <Label className="font-bold">
+                                    {x.caption}
+                                </Label>
+                                <CustomFieldRender
+                                    field={x}
+                                    rowName={x.name}
+                                    value={value}
+                                    onChangeValue={(val, NAME) => {
+                                        setFieldData(val, NAME, x.type)
+                                    }}
+                                    defaultValue={x.defaultValue}
+    
+                                
+                                />
+                            </div>
+                        )
+                    })
+                }
+            </div>
             <div>
                 {children}
             </div>
@@ -243,41 +290,46 @@ export function MinuteCard({ id, minute, onDelete, onUpdate }: MinuteCardProps) 
                             </SheetDescription>
 
                         </SheetHeader>
-                        <Card className="p-4 m-2">
-                            <FormMinute minute={minute} onSubmit={async (result) => {
+                        <div className="w-full h-auto overflow-auto">
 
-                                const resultado = await updateMinute(minute.id as number, {
-                                    description: result.description,
-                                    fields: result.fields,
-                                    title: result.title,
-                                    type: result.type
-                                })
+                            <Card className="p-4 m-2">
+                                <FormMinute minute={minute} onSubmit={async (result) => {
 
-                                if (resultado.success) {
-                                    toast("La minuta ha sido actualizada", {
-                                        style: { color: "green" },
-                                        richColors: true
+                                    const resultado = await updateMinute(minute.id as number, {
+                                        description: result.description,
+                                        fields: result.fields,
+                                        title: result.title,
+                                        type: result.type
                                     })
-                                    setOpenSheet(false)
-                                    if (onUpdate) {
-                                        onUpdate(result)
+
+                                    // console.log("guardado:", resultado)
+
+                                    if (resultado.success) {
+                                        toast("La minuta ha sido actualizada", {
+                                            style: { color: "green" },
+                                            richColors: true
+                                        })
+                                        setOpenSheet(false)
+                                        if (onUpdate) {
+                                            onUpdate(result)
+                                        }
+                                    } else {
+                                        toast("Hubo un problema al actualizar la minuta", {
+                                            style: { color: "green" },
+                                            richColors: true,
+                                            description: resultado.msg
+                                        })
                                     }
-                                } else {
-                                    toast("Hubo un problema al actualizar la minuta", {
-                                        style: { color: "green" },
-                                        richColors: true,
-                                        description: resultado.msg
-                                    })
-                                }
 
-                            }}>
-                                <Button className="w-full">
-                                    <Save />
-                                    Guardar
-                                </Button>
-                            </FormMinute>
+                                }}>
+                                    <Button className="w-full">
+                                        <Save />
+                                        Guardar
+                                    </Button>
+                                </FormMinute>
 
-                        </Card>
+                            </Card>
+                        </div>
                         <SheetFooter>
                             <SheetClose asChild>
                                 <Button className="w-full" variant={"outline"}>
@@ -372,7 +424,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
         setDescription(marker.description);
         setReference(marker.reference);
 
-        const MinutesResponse = await getAllMinutes({ marker_id: id });
+        const MinutesResponse = await getAllMinutes({ marker_id: id }, {});
 
         if (!MinutesResponse.success) {
             toast("No se pudo cargar las minutas de: " + subject, {
@@ -519,38 +571,40 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                                 </SheetDescription>
 
                                             </SheetHeader>
-                                            <Card className="p-4 m-2">
-                                                <FormMinute minute={{}} onSubmit={async (result) => {
+                                            <div className="w-full overflow-auto h-auto">
+                                                <Card className="p-4 m-2">
+                                                    <FormMinute minute={{fields:{}}} onSubmit={async (result) => {
 
 
-                                                    const resultado = await createMinute({
-                                                        description: result.description,
-                                                        fields: result.fields,
-                                                        marker_id: id,
-                                                        title: result.title,
-                                                        type: result.type
-                                                    });
+                                                        const resultado = await createMinute({
+                                                            description: result.description,
+                                                            fields: result.fields,
+                                                            marker_id: id,
+                                                            title: result.title,
+                                                            type: result.type
+                                                        });
 
-                                                    if (resultado.success) {
-                                                        allLoadData();
-                                                        setOpenSheetCreateMinute(false);
+                                                        if (resultado.success) {
+                                                            allLoadData();
+                                                            setOpenSheetCreateMinute(false);
 
-                                                    } else {
-                                                        toast("No se pudo crear la minuta:", {
-                                                            richColors: true,
-                                                            style: { color: "crimson" }
-                                                        })
-                                                    }
+                                                        } else {
+                                                            toast("No se pudo crear la minuta:", {
+                                                                richColors: true,
+                                                                style: { color: "crimson" }
+                                                            })
+                                                        }
 
 
-                                                }}>
-                                                    <Button className="w-full">
-                                                        <Save />
-                                                        Guardar
-                                                    </Button>
-                                                </FormMinute>
+                                                    }}>
+                                                        <Button className="w-full">
+                                                            <Save />
+                                                            Guardar
+                                                        </Button>
+                                                    </FormMinute>
 
-                                            </Card>
+                                                </Card>
+                                            </div>
                                             <SheetFooter>
                                                 <SheetClose asChild>
                                                     <Button className="w-full" variant={"outline"}>
@@ -563,7 +617,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                     </Sheet>
                                     {
                                         Minutes.map(x => {
-
+                                            // console.log(x)
 
                                             return (
                                                 <MinuteCard

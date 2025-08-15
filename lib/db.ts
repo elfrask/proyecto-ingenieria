@@ -1,10 +1,12 @@
-import mongoose, {model, connect, Schema, Model, RootFilterQuery} from  "mongoose";
-import {autoIncrement, initializeCounterModel} from "./mongooseAutoincrement";
-import {IMarker, IMinute, IMinuteType, IUser} from "./db-types"
+import mongoose, { model, connect, Schema, Model, RootFilterQuery } from "mongoose";
+import { autoIncrement, initializeCounterModel } from "./mongooseAutoincrement";
+import { IMarker, IMinute, IMinuteType, IUser } from "./db-types"
 if (!process.env.MONGO_URI) {
     throw new Error("MONGO_URI environment variable is not defined");
 }
-mongoose.connect(process.env.MONGO_URI as string);
+mongoose.connect(process.env.MONGO_URI as string, {bufferCommands: false});
+// En tu archivo de conexión a la base de datos
+// mongoose.set('strictQuery', true);
 
 const UserSchema = new Schema({
     user: {
@@ -48,18 +50,27 @@ const MinuteSchema = new Schema({
     description: String,
     type: String,
     marker_id: Number,
-    fields: Object
-});
+    // fields: {
+    //     type: Object,
+    //     default: {},
+    // }
+    fields: {
+        type: Schema.Types.Mixed,
+        default: {},
+        minimize: false,
+        strict: false,
+    }
+}, { strict: false });
 
 // Aplica el plugin de autoincremento al campo 'id' de SimpleMinute
 autoIncrement(MinuteSchema, { field: "id", model: "Minute" });
 autoIncrement(MinuteTypeSchema, { field: "id", model: "MinuteType" });
 
 function ExportModel<T = Document>(nameModel: string, schema: Schema): Model<T> {
-    
+
     const MODEL: Model<T> =
         (mongoose.models[nameModel] as Model<T>) || mongoose.model<T>(nameModel, schema);
-    
+
     return MODEL
 }
 

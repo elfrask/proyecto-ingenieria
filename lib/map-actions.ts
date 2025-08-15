@@ -146,8 +146,11 @@ export async function getAllMinutes(
     options: Record<string, any> = {}
 ): Promise<ResponseRequest<Minute[]>> {
     try {
-        const query = MinuteModel.find(filter, null, options);
+        const query = MinuteModel.find(filter, null, {...options}).lean();
         const minutes = await query.exec();
+
+        console.log(minutes)
+        
         return Response(true, minutes.map(m => clean<Minute>(m)), 0, "Minutes obtenidos correctamente");
     } catch (err: any) {
         return Response(false, [], 1, err.message || "Error al obtener Minutes");
