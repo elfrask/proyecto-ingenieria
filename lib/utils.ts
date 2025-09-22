@@ -1,4 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
+import { ChangeEvent, Dispatch, HtmlHTMLAttributes } from "react";
+import { toast } from "sonner";
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
@@ -54,3 +56,73 @@ export function caption2Name(captions:string): string {
 };
 
 var c2n = caption2Name
+
+export const Notify = {
+  success:(title: string, description?: string, rich?: boolean) => {toast(title, {style:{ color: "lime"}, richColors: rich, description})},
+  reject:(title: string, description?: string, rich?: boolean) => {toast(title, {style:{ color: "crimson"}, richColors: rich, description})},
+}
+
+export interface ResponseRequest<T> {
+    msg: string,
+    error: number,
+    success: boolean,
+    result: T | null,
+}
+
+export function Response<T>(success: boolean, result: T | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
+    return {
+        success,
+        result,
+        error,
+        msg
+    }
+}
+
+
+export type HTML<T=HTMLDivElement> = HtmlHTMLAttributes<T>;
+export type typeValues = "text" | "number" | "date";
+
+
+export function StateInput<T = any>(value: T, setValue: Dispatch<T>) {
+  
+  return {
+    useInput: (
+      key: keyof T, 
+      typeValue: typeValues = "text",
+      useOnChangeValue?: boolean, 
+    ) => {
+
+      function setState(_value: any, element: ChangeEvent<HTMLInputElement>|null) {
+
+        if (typeValue == "number") {
+          if (element) _value = element?.target.valueAsNumber as number;
+          else _value = Number(_value);
+        } else if (typeValue == "date") {
+          if (element) _value = element?.target.valueAsDate as Date;
+          else _value = new Date(_value);
+        }
+
+        setValue({...value, [key]: _value })
+
+        
+      }
+
+      if (useOnChangeValue) {
+        return {
+          value: value[key]||"",
+          onChangeValue: (e: HTML<HTMLInputElement>) => { setState(e, null) }
+        }
+      } else {
+        return {
+          value: value[key]||"",
+          onChange: (e: ChangeEvent<HTMLInputElement>) => { setState(e.target.value, e) }
+        }
+      }
+    } 
+  }
+}
+
+
+export function Class2Json<T=any>(Obj: any): T {
+  return JSON.parse(JSON.stringify(Obj))
+}

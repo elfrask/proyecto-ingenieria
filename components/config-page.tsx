@@ -12,19 +12,22 @@ import { IMinuteType } from "@/lib/db-types";
 import { createMinuteType, getAllMinuteTypes } from "@/lib/minute-actions";
 import { toast } from "sonner";
 import { MinuteTypeCard } from "./custom-fields";
+import { UserPageConfigs } from "./user-page-configs";
 
+
+export type functionLinkSectionInterface = (props: { isOpen: boolean }) => ReactNode
 
 export interface LinkSectionsItemProps {
     title: string | ReactNode;
     description: string | ReactNode;
     // content: FC<HtmlHTMLAttributes<HTMLDivElement>>;
-    content: (props: { isOpen: boolean }) => ReactNode;
+    content: functionLinkSectionInterface;
 }
 
 export function LinkSectionsItemElement(
     title: string | ReactNode,
     description: string | ReactNode,
-    content: (props: { isOpen: boolean }) => ReactNode
+    content: functionLinkSectionInterface
 ): LinkSectionsItemProps {
 
     return {
@@ -148,6 +151,23 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
                 </div>
             )
         }
+    ),
+    LinkSectionsItemElement(
+        "Configuración de usuarios y roles",
+        "Crea y gestiona los usuarios de la plataforma, roles, permisos y mas",
+        ({ isOpen }) => {
+
+            return(
+                <div className="w-full p-4 space-y-2">
+                    {
+                        UserPageConfigs.map((x, i)=> {
+
+                            return <LinkElement key={i} {...x} />
+                        })
+                    }
+                </div>
+            )
+        }
     )
 ]
 
@@ -164,7 +184,10 @@ export function LinkElement(
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant={"link"}>
+                <Button variant={"link"} className="
+                text-white border-gray-500 border-b flex justify-between
+                  rounded-none w-full hover:bg-accent
+                ">
                     {title}
                     <ExternalLink />
 
@@ -234,3 +257,5 @@ export default function ConfigPage({ children, className }: ConfigPageProps) {
         </div>
     )
 }
+
+

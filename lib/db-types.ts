@@ -62,3 +62,23 @@ export interface IMinuteType {
   typeName: string;
   fields: ICustomField[];
 }
+
+export type None_ReadOnly_ReadAndWrite = 0 | 1 | 2 | 3; // Por Defecto | Desactivado | Solo lectura | Lectura y escritura 
+export type ReadOnly_ReadAndWrite = 0 | 1 | 2; // Por Defecto | Solo lectura | Lectura y escritura
+
+export interface PermissionInterface {
+  GeneralConfigs: None_ReadOnly_ReadAndWrite;
+  Markers: ReadOnly_ReadAndWrite;
+  Minute: ReadOnly_ReadAndWrite;
+  MinuteType: ReadOnly_ReadAndWrite;
+
+}
+
+export interface IRole {
+  name: string;
+  title: string;
+  extends: string;
+  disabled: boolean;
+
+  permission: PermissionInterface
+}
