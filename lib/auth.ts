@@ -2,6 +2,8 @@
 import { cookies } from "next/headers";
 import { User } from "./db";
 import bcrypt from "bcrypt";
+import { IRole, PermissionInterface } from "./db-types";
+import { getRoleAndInstance } from "./role-action";
 
 const COOKIE_NAME = "session_token";
 
@@ -10,9 +12,10 @@ const COOKIE_NAME = "session_token";
 export interface Session {
   user: string;
   role: string;
+  permission: PermissionInterface
 }
 
-export interface SessionCookie extends Session {
+export interface SessionCookie extends Omit<Session, "permission"> {
   pass: string;
 
 }
@@ -52,16 +55,17 @@ export async function getSession(): Promise<Session | null> {
   try {
     const session: SessionCookie = JSON.parse(cookie);
     const found = await User.findOne({ user: session.user });
-
+    let Role: IRole = {permission:{}} as IRole
+    
     if (session.user !== "admin") {
       if (!found) return null;
       if (!(found.pass === session.pass)) return null;
-      
+      Role = (await getRoleAndInstance(found.role)).result as IRole;
     } else {
       if (!bcrypt.compareSync(process.env.ADMIN_PASS as string, session.pass)) return null
     }
 
-    return {...session, pass: undefined} as Session;
+    return {...session, pass: undefined, permission: (Role as IRole).permission} as Session;
   } catch {
     return null;
   }

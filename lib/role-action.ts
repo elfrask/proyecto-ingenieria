@@ -1,10 +1,10 @@
 "use server"
 import { Role, User } from "./db";
 import { Class2Json, Response, ResponseRequest } from "./utils";
-import { IRole } from "./db-types";
+import { IRole, None_ReadOnly_ReadAndWrite, PermissionInterface, ReadOnly_ReadAndWrite } from "./db-types";
 
 // Crear un nuevo rol
-export async function createRole(data: IRole): Promise<ResponseRequest<IRole|null>> {
+export async function createRole(data: IRole): Promise<ResponseRequest<IRole | null>> {
     try {
         const role = await Role.create(data);
         return Response(true, Class2Json<IRole>(role), 0, "Rol creado correctamente");
@@ -14,7 +14,7 @@ export async function createRole(data: IRole): Promise<ResponseRequest<IRole|nul
 }
 
 // Actualizar un rol por nombre
-export async function updateRole(name: string, data: Partial<Omit<IRole, "name">>): Promise<ResponseRequest<IRole|null>> {
+export async function updateRole(name: string, data: Partial<Omit<IRole, "name">>): Promise<ResponseRequest<IRole | null>> {
     try {
         const role = await Role.findOneAndUpdate({ name }, data, { new: true });
         if (!role) return Response(false, null, 404, "Rol no encontrado");
@@ -25,7 +25,7 @@ export async function updateRole(name: string, data: Partial<Omit<IRole, "name">
 }
 
 // Obtener un rol por nombre
-export async function getRole(name: string): Promise<ResponseRequest<IRole|null>> {
+export async function getRole(name: string): Promise<ResponseRequest<IRole | null>> {
     try {
         const role = await Role.findOne({ name });
         if (!role) return Response(false, null, 404, "Rol no encontrado");
@@ -33,7 +33,54 @@ export async function getRole(name: string): Promise<ResponseRequest<IRole|null>
     } catch (err: any) {
         return Response(false, null, 1, err.message || "Error al obtener rol");
     }
+};
+
+async function RecursiveExtendsPermissionRole(role: IRole): Promise<PermissionInterface> {
+
+    const roleExtended = await Role.findOne({ extends: role.extends });
+    let permissionExtended: PermissionInterface = {} as PermissionInterface;
+    if (roleExtended) {
+        
+        
+
+        permissionExtended = await RecursiveExtendsPermissionRole(
+            roleExtended as IRole
+        );
+    };
+
+    Object.entries(role.permission).forEach(([key, value]: [
+        string, 
+        ReadOnly_ReadAndWrite|None_ReadOnly_ReadAndWrite]
+    ) => {
+        if (value === 0) {
+            permissionExtended[key as keyof PermissionInterface] = value;
+        }
+    })
+
+    return permissionExtended
+
+
 }
+
+export async function getRoleAndInstance(name: string): Promise<ResponseRequest<IRole | null>> {
+    try {
+        const role = await Role.findOne({ name });
+
+        if (!role) return Response(false, null, 404, "Rol no encontrado");
+
+        role.permission = {
+            ...(await RecursiveExtendsPermissionRole(
+                role as IRole
+            ))
+        }
+
+        return Response(true, Class2Json<IRole>(role), 0, "Rol encontrado");
+    } catch (err: any) {
+        return Response(false, null, 1, err.message || "Error al obtener rol");
+    }
+};
+
+
 
 // Obtener todos los roles
 export async function getAllRoles(): Promise<ResponseRequest<IRole[]>> {

@@ -1147,7 +1147,7 @@ export function MainPage() {
                         Configuraciones
                     </DialogTitle>
                     <DialogDescription>
-                        Panel de configuraciones, aqui puedes configurar todos los aspectos del sistema
+                        Panel de configuraciones, aquí puedes configurar todos los aspectos del sistema
                     </DialogDescription>
                 </DialogHeader>
                 <ConfigPage>
