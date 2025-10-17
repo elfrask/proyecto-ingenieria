@@ -10,5 +10,7 @@ export default async function DashboardPage() {
   
   if (!user) redirect("/");
 
+  console.log(user)
+
   return <DashboardClient />;
 }

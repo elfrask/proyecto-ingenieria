@@ -5,22 +5,26 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Pencil, Plus, Save } from "lucide-react";
 import { toast } from "sonner";
-import { caption2Name, HTML, Notify, StateInput } from "@/lib/utils";
+import { caption2Name, Class2Json, HTML, Notify, StateInput } from "@/lib/utils";
 import { createRole, getAllRoles, getRole, updateRole } from "@/lib/role-action";
-import { IRole, IUser, PermissionInterface } from "@/lib/db-types";
+import { IRole, IUser, None_ReadOnly_ReadAndWrite, PermissionDefault, PermissionInterface } from "@/lib/db-types";
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from "./ui/sheet";
 import SheetSimple from "./sheet-simple";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { createUser, getAllUsers, getUser, updateUser } from "@/lib/user-actions";
+import { getSession } from "@/lib/auth";
 
+const UserSession = await getSession();
 
 
 interface SelectPermissionProps extends Omit<HTML<HTMLSelectElement>, "onChange"> {
     value?: number;
     onChangeValue?: (e: number) => void;
-    typeSelect?: "disabledAvailable" | "ReadOnly|ReadAndWrite"
+    typeSelect?: "disabledAvailable" | "ReadOnly|ReadAndWrite" | "Enable|Disable_Only"
+    disabled?: boolean
+    useCustomDisabled?: boolean;
 }
 
 const SelectPermission: FunctionComponent<SelectPermissionProps> = ({
@@ -28,8 +32,17 @@ const SelectPermission: FunctionComponent<SelectPermissionProps> = ({
     defaultValue,
     value,
     typeSelect,
-    className
+    className,
+    useCustomDisabled,
+    disabled
 }) => {
+    let disabledInput = disabled || false;
+
+
+    if (!useCustomDisabled) {
+        disabledInput = UserSession?.permission.roles !== 2
+    }
+
     let Options = [
         "Por defecto",
         "Deshabilitado",
@@ -46,13 +59,20 @@ const SelectPermission: FunctionComponent<SelectPermissionProps> = ({
             "Solo lectura",
             "Lectura y escritura"
         ]
+    } else if (typeSelect === "Enable|Disable_Only") {
+        Options = [
+            "Por defecto",
+            "Deshabilitado",
+            // "Solo lectura",
+            "Activo"
+        ]
     }
 
 
 
 
     return (
-        <Select defaultValue="0" value={String(value || 0)} onValueChange={x => {
+        <Select disabled={disabledInput} defaultValue="0" value={String(value || 0)} onValueChange={x => {
             if (onChangeValue) {
                 onChangeValue(Number(x))
             }
@@ -139,6 +159,8 @@ const RoleEditor: FunctionComponent<RoleEditorProps> = ({
                         Titulo
                     </CardTitle>
                     <Input
+                        disabled={UserSession?.permission.roles !== 2}
+
                         value={Rol?.title}
                         onChange={x => { setRolPass("title", x.target.value) }}
                         className="w-full"
@@ -147,11 +169,17 @@ const RoleEditor: FunctionComponent<RoleEditorProps> = ({
                     <Label>
                         Deshabilitado
                     </Label>
-                    <Switch value={"Deshabilitado"} checked={Rol?.disabled} />
+                    <Switch
+                        disabled={UserSession?.permission.roles !== 2}
+                        value={"Deshabilitado"}
+                        checked={Rol?.disabled}
+                    />
 
                 </CardHeader>
                 <CardFooter className="flex justify-end">
                     <Button
+                        disabled={UserSession?.permission.roles !== 2}
+
                         onClick={async () => {
 
 
@@ -189,6 +217,7 @@ const RoleEditor: FunctionComponent<RoleEditorProps> = ({
                             value={Rol?.permission.GeneralConfigs}
                             onChangeValue={x => setPermissionPass("GeneralConfigs", x)}
                             className="w-full"
+                            typeSelect="Enable|Disable_Only"
                         />
                         <hr className="my-2" />
 
@@ -227,6 +256,32 @@ const RoleEditor: FunctionComponent<RoleEditorProps> = ({
                             typeSelect="ReadOnly|ReadAndWrite"
                         />
                         <hr className="my-2" />
+
+
+                        <Label className="mb-2">
+                            Roles para usuarios
+                        </Label>
+                        <SelectPermission
+                            value={Rol?.permission.roles}
+                            onChangeValue={x => setPermissionPass("roles", x)}
+                            className="w-full"
+                            typeSelect="ReadOnly|ReadAndWrite"
+                        />
+                        <hr className="my-2" />
+
+
+                        <Label className="mb-2">
+                            Usuarios
+                        </Label>
+                        <SelectPermission
+                            value={Rol?.permission.users}
+                            onChangeValue={x => setPermissionPass("users", x)}
+                            className="w-full"
+                            typeSelect="disabledAvailable"
+                        />
+                        <hr className="my-2" />
+
+
 
 
                     </CardContent>
@@ -293,6 +348,7 @@ const UserEditor: FunctionComponent<UserEditorProps> = ({
                         Contraseña
                     </CardTitle>
                     <Input
+                        disabled={UserSession?.permission.users !== 3}
                         type="password"
                         value={UserData?.pass}
                         onChange={x => { setUserPass("pass", x.target.value) }}
@@ -304,6 +360,7 @@ const UserEditor: FunctionComponent<UserEditorProps> = ({
                     </Label>
 
                     <Select
+                        disabled={UserSession?.permission.users !== 3}
                         value={UserData?.role}
                         onValueChange={x => { setUserPass("role", x) }}
 
@@ -324,6 +381,8 @@ const UserEditor: FunctionComponent<UserEditorProps> = ({
                 </CardHeader>
                 <CardFooter className="flex justify-end">
                     <Button
+                        disabled={UserSession?.permission.users !== 3}
+
                         onClick={async () => {
                             const result = await updateUser(UserData?.user as string, UserData as IUser);
                             if (result.success) {
@@ -371,6 +430,8 @@ const RolesPage: functionLinkSectionInterface = ({ isOpen }) => {
                         Crear rol
                     </CardTitle>
                     <Input
+                        disabled={UserSession?.permission.roles !== 2}
+
                         value={newTitle}
                         onChange={x => setNewTitle(x.target.value)}
                         className="w-full"
@@ -380,40 +441,38 @@ const RolesPage: functionLinkSectionInterface = ({ isOpen }) => {
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="flex justify-end">
-                    <Button onClick={async () => {
+                    <Button
+                        disabled={UserSession?.permission.roles !== 2}
 
-                        if (newTitle === "") {
-                            Notify.reject(
-                                "Debes de colocar un titulo para crear un rol",
-                                ""
-                            );
-                            return null;
-                        };
+                        onClick={async () => {
 
-                        const Result = await createRole({
-                            title: newTitle,
-                            name: caption2Name(newTitle),
-                            extends: "",
-                            disabled: false,
-                            permission: {
-                                GeneralConfigs: 0,
-                                Markers: 0,
-                                Minute: 0,
-                                MinuteType: 0
+                            if (newTitle === "") {
+                                Notify.reject(
+                                    "Debes de colocar un titulo para crear un rol",
+                                    ""
+                                );
+                                return null;
+                            };
+
+                            const Result = await createRole({
+                                title: newTitle,
+                                name: caption2Name(newTitle),
+                                extends: "",
+                                disabled: false,
+                                permission: Class2Json<PermissionInterface>(PermissionDefault)
+                            });
+
+                            if (Result.success) {
+                                Notify.success(`Se ha creador el role: '${newTitle}'`);
+                                setNewTitle("")
+                                LoadData();
+
+                            } else {
+                                Notify.reject("Hubo un error al intentar crear el rol")
                             }
-                        });
-
-                        if (Result.success) {
-                            Notify.success(`Se ha creador el role: '${newTitle}'`);
-                            setNewTitle("")
-                            LoadData();
-
-                        } else {
-                            Notify.reject("Hubo un error al intentar crear el rol")
-                        }
 
 
-                    }}>
+                        }}>
                         <Plus />
                         Crear rol
                     </Button>
@@ -421,7 +480,7 @@ const RolesPage: functionLinkSectionInterface = ({ isOpen }) => {
             </Card>
             <hr className="my-2" />
 
-            <div className="h-auto w-full overflow-auto">
+            <div className="h-auto w-full overflow-auto space-y-2">
 
                 {
                     Roles.map((x, i) => {
@@ -490,6 +549,7 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
                         Crear usuario
                     </CardTitle>
                     <Input
+                        disabled={UserSession?.permission.users !== 3}
                         value={newUser}
                         onChange={x => setNewUser(x.target.value)}
                         className="w-full"
@@ -499,6 +559,8 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
                         Contraseña
                     </CardTitle>
                     <Input
+                        disabled={UserSession?.permission.users !== 3}
+
                         type="password"
                         value={pass}
                         onChange={x => setPass(x.target.value)}
@@ -509,6 +571,8 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
                         Rol
                     </CardTitle>
                     <Select
+                        disabled={UserSession?.permission.users !== 3}
+
                         value={newRol}
                         onValueChange={x => { setNewRole(x) }}
 
@@ -530,49 +594,51 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
 
                 </CardHeader>
                 <CardFooter className="flex justify-end">
-                    <Button onClick={async () => {
+                    <Button
+                        disabled={UserSession?.permission.users !== 3}
+                        onClick={async () => {
 
-                        if (newUser === "") {
-                            Notify.reject(
-                                "Debes de colocar un nombre de usuario",
-                            );
-                            return null;
-                        };
+                            if (newUser === "") {
+                                Notify.reject(
+                                    "Debes de colocar un nombre de usuario",
+                                );
+                                return null;
+                            };
 
-                        if (pass === "") {
-                            Notify.reject(
-                                "Debes de colocar una contraseña al usuario",
-                            );
-                            return null;
-                        };
+                            if (pass === "") {
+                                Notify.reject(
+                                    "Debes de colocar una contraseña al usuario",
+                                );
+                                return null;
+                            };
 
-                        if (newRol === "") {
-                            Notify.reject(
-                                "Debes de colocar un rol al usuario",
-                            );
-                            return null;
-                        };
+                            if (newRol === "") {
+                                Notify.reject(
+                                    "Debes de colocar un rol al usuario",
+                                );
+                                return null;
+                            };
 
 
 
-                        const Result = await createUser({
-                            user: newUser,
-                            pass: pass,
-                            role: newRol
-                        });
+                            const Result = await createUser({
+                                user: newUser,
+                                pass: pass,
+                                role: newRol
+                            });
 
-                        if (Result.success) {
-                            Notify.success(`Se ha creador el usuario: '${newUser}'`);
-                            setNewUser("")
-                            setPass("")
-                            setNewRole("")
-                            LoadData();
+                            if (Result.success) {
+                                Notify.success(`Se ha creador el usuario: '${newUser}'`);
+                                setNewUser("")
+                                setPass("")
+                                setNewRole("")
+                                LoadData();
 
-                        } else {
-                            Notify.reject("Hubo un error al intentar crear el usuario")
-                        }
+                            } else {
+                                Notify.reject("Hubo un error al intentar crear el usuario")
+                            }
 
-                    }}>
+                        }}>
                         <Plus />
                         Crear rol
                     </Button>
@@ -580,7 +646,7 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
             </Card>
             <hr className="my-2" />
 
-            <div className="h-auto w-full overflow-auto">
+            <div className="h-auto w-full overflow-auto space-y-2">
 
                 {
                     Users.map((x, i) => {
@@ -619,7 +685,6 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
 
 
 
-
 export const UserPageConfigs: LinkSectionsItemProps[] = [
     LinkSectionsItemElement(
         "Roles de la plataforma",
@@ -629,7 +694,8 @@ export const UserPageConfigs: LinkSectionsItemProps[] = [
     LinkSectionsItemElement(
         "Usuarios de la plataforma",
         "Gestiona los usuarios de la plataforma y asigna los roles",
-        UserPage
+        UserPage,
+        UserSession?.permission.users as number < 2
     ),
 
 ]

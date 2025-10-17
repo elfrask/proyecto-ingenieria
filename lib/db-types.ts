@@ -65,14 +65,38 @@ export interface IMinuteType {
 
 export type None_ReadOnly_ReadAndWrite = 0 | 1 | 2 | 3; // Por Defecto | Desactivado | Solo lectura | Lectura y escritura 
 export type ReadOnly_ReadAndWrite = 0 | 1 | 2; // Por Defecto | Solo lectura | Lectura y escritura
+export type Enable_Disable = 0 | 1 | 2; // Por Defecto | Deshabilitado | Habilitado
 
 export interface PermissionInterface {
-  GeneralConfigs: None_ReadOnly_ReadAndWrite;
+  GeneralConfigs: Enable_Disable;
   Markers: ReadOnly_ReadAndWrite;
   Minute: ReadOnly_ReadAndWrite;
   MinuteType: ReadOnly_ReadAndWrite;
+  roles: ReadOnly_ReadAndWrite;
+  users: None_ReadOnly_ReadAndWrite;
 
 }
+
+export const PermissionDefault: PermissionInterface = {
+ GeneralConfigs: 0,
+ Markers: 0,
+ Minute: 0,
+ MinuteType: 0,
+ roles: 0,
+ users: 0
+}
+
+
+export const PermissionMaxAdmin: PermissionInterface = {
+ GeneralConfigs: 2,
+ Markers: 2,
+ Minute: 2,
+ MinuteType: 2,
+ roles: 2,
+ users: 3
+}
+
+
 
 export interface IRole {
   name: string;

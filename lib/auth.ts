@@ -2,8 +2,9 @@
 import { cookies } from "next/headers";
 import { User } from "./db";
 import bcrypt from "bcrypt";
-import { IRole, PermissionInterface } from "./db-types";
+import { IRole, PermissionInterface, PermissionMaxAdmin } from "./db-types";
 import { getRoleAndInstance } from "./role-action";
+import { Class2Json_ServerImplementation } from "./utils-server";
 
 const COOKIE_NAME = "session_token";
 
@@ -38,7 +39,7 @@ export async function login(user: string, pass: string): Promise<LoginResult<boo
     } else {
         const found = await User.findOne({ user });
         if (!found) return { success: false, isLogin: false, error:1, msg:"el usuario no existe" };
-        const valid = await bcrypt.compare(pass, found.pass);
+        const valid = pass === found.pass;
         if (!valid) return { success: false, isLogin: false, error:2, msg:"la contraseña es incorrecta" };
         session = { user: found.user, role: found.role, pass: found.pass };
 
@@ -63,6 +64,9 @@ export async function getSession(): Promise<Session | null> {
       Role = (await getRoleAndInstance(found.role)).result as IRole;
     } else {
       if (!bcrypt.compareSync(process.env.ADMIN_PASS as string, session.pass)) return null
+      Role.permission = Class2Json_ServerImplementation<PermissionInterface>(
+        PermissionMaxAdmin
+      )
     }
 
     return {...session, pass: undefined, permission: (Role as IRole).permission} as Session;

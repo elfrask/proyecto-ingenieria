@@ -13,6 +13,9 @@ import { createMinuteType, getAllMinuteTypes } from "@/lib/minute-actions";
 import { toast } from "sonner";
 import { MinuteTypeCard } from "./custom-fields";
 import { UserPageConfigs } from "./user-page-configs";
+import { getSession } from "@/lib/auth";
+
+const UserSession = await getSession();
 
 
 export type functionLinkSectionInterface = (props: { isOpen: boolean }) => ReactNode
@@ -22,18 +25,21 @@ export interface LinkSectionsItemProps {
     description: string | ReactNode;
     // content: FC<HtmlHTMLAttributes<HTMLDivElement>>;
     content: functionLinkSectionInterface;
+    disabled: boolean;
 }
 
 export function LinkSectionsItemElement(
     title: string | ReactNode,
     description: string | ReactNode,
-    content: functionLinkSectionInterface
+    content: functionLinkSectionInterface,
+    disabled: boolean = false
 ): LinkSectionsItemProps {
 
     return {
         title,
         content,
-        description
+        description,
+        disabled
     }
 }
 
@@ -132,8 +138,16 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
                             Crear plantilla de minuta
                         </Label>
                         <div className="flex flex-row space-x-2">
-                            <Input value={newTypeName} placeholder="Titulo del nuevo tipo" onChange={x => setNewTypeName(x.target.value)} />
-                            <Button onClick={createMinuteAType} >
+                            <Input
+                                disabled={UserSession?.permission.MinuteType !== 2}
+                                value={newTypeName}
+                                placeholder="Titulo del nuevo tipo"
+                                onChange={x => setNewTypeName(x.target.value)}
+                            />
+                            <Button
+                            
+                            disabled={UserSession?.permission.MinuteType !== 2}
+                            onClick={createMinuteAType} >
                                 <PlusCircle />
                                 Agregar
                             </Button>
@@ -144,7 +158,7 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
                         {
                             typeMinutesList.map(x => {
 
-                                return <MinuteTypeCard minuteType={x}  />
+                                return <MinuteTypeCard minuteType={x} />
                             })
                         }
                     </div>
@@ -157,11 +171,11 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
         "Crea y gestiona los usuarios de la plataforma, roles, permisos y mas",
         ({ isOpen }) => {
 
-            return(
+            return (
                 <div className="w-full p-4 space-y-2">
                     {
-                        UserPageConfigs.map((x, i)=> {
-
+                        UserPageConfigs.map((x, i) => {
+                            // console.log(x)
                             return <LinkElement key={i} {...x} />
                         })
                     }
@@ -176,7 +190,8 @@ export function LinkElement(
     {
         description,
         title,
-        content
+        content,
+        disabled
     }: Omit<LinkSectionsItemProps, "content"> & { content: (props: { isOpen: boolean }) => ReactNode }) {
     const [open, setOpen] = useState(false)
     const Content = content;
@@ -184,7 +199,7 @@ export function LinkElement(
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant={"link"} className="
+                <Button disabled={disabled} variant={"link"} className="
                 text-white border-gray-500 border-b flex justify-between
                   rounded-none w-full hover:bg-accent
                 ">
@@ -231,9 +246,15 @@ export default function ConfigPage({ children, className }: ConfigPageProps) {
                     <TabsTrigger value="userConfig">
                         Conf. de usuario
                     </TabsTrigger>
-                    <TabsTrigger value="globalConfig">
-                        Conf. globales
-                    </TabsTrigger>
+                    {
+                        UserSession?.permission.GeneralConfigs === 2 
+                        // true
+                            ?
+                            <TabsTrigger value="globalConfig">
+                                Conf. globales
+                            </TabsTrigger>
+                            : []
+                    }
 
 
                 </TabsList>
@@ -246,8 +267,8 @@ export default function ConfigPage({ children, className }: ConfigPageProps) {
                         {
                             GlobalConfigs.map(x => {
 
-                                return(
-                                    <LinkElement title={x.title} description={x.description} content={x.content} />
+                                return (
+                                    <LinkElement title={x.title} disabled={x.disabled} description={x.description} content={x.content} />
                                 )
                             })
                         }

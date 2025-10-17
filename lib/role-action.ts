@@ -1,7 +1,7 @@
 "use server"
 import { Role, User } from "./db";
 import { Class2Json, Response, ResponseRequest } from "./utils";
-import { IRole, None_ReadOnly_ReadAndWrite, PermissionInterface, ReadOnly_ReadAndWrite } from "./db-types";
+import { IRole, None_ReadOnly_ReadAndWrite, PermissionDefault, PermissionInterface, ReadOnly_ReadAndWrite } from "./db-types";
 
 // Crear un nuevo rol
 export async function createRole(data: IRole): Promise<ResponseRequest<IRole | null>> {
@@ -37,12 +37,16 @@ export async function getRole(name: string): Promise<ResponseRequest<IRole | nul
 
 async function RecursiveExtendsPermissionRole(role: IRole): Promise<PermissionInterface> {
 
-    const roleExtended = await Role.findOne({ extends: role.extends });
+    const roleExtended = await Role.findOne({ name: role.extends });
     let permissionExtended: PermissionInterface = {} as PermissionInterface;
+        // console.log([roleExtended, role])
+    
+    // if (false) 
     if (roleExtended) {
-        
-        
-
+            
+            
+            
+        // console.log([roleExtended])
         permissionExtended = await RecursiveExtendsPermissionRole(
             roleExtended as IRole
         );
@@ -50,10 +54,10 @@ async function RecursiveExtendsPermissionRole(role: IRole): Promise<PermissionIn
 
     Object.entries(role.permission).forEach(([key, value]: [
         string, 
-        ReadOnly_ReadAndWrite|None_ReadOnly_ReadAndWrite]
-    ) => {
-        if (value === 0) {
-            permissionExtended[key as keyof PermissionInterface] = value;
+        ReadOnly_ReadAndWrite|None_ReadOnly_ReadAndWrite
+    ]) => {
+        if (value !== 0) {
+            permissionExtended[key as keyof PermissionInterface] = value as ReadOnly_ReadAndWrite;
         }
     })
 
@@ -69,6 +73,7 @@ export async function getRoleAndInstance(name: string): Promise<ResponseRequest<
         if (!role) return Response(false, null, 404, "Rol no encontrado");
 
         role.permission = {
+            ...(Class2Json<PermissionInterface>(PermissionDefault)),
             ...(await RecursiveExtendsPermissionRole(
                 role as IRole
             ))

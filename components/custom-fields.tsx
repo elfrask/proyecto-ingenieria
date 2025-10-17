@@ -12,6 +12,8 @@ import { Tabs, TabsContent } from "./ui/tabs";
 import { InputCalendar } from "./input-calendar";
 import { updateMinuteType } from "@/lib/minute-actions";
 import { toast } from "sonner";
+import { getSession } from "@/lib/auth";
+const UserSession = await getSession();
 
 export interface MinuteTypeCardProps {
     minuteType: IMinuteType
@@ -83,20 +85,29 @@ export function MinuteTypeCard({ minuteType }: MinuteTypeCardProps) {
                         <div className="px-4 space-y-1">
 
                             <Label>Titulo</Label>
-                            <Input placeholder="Titulo" value={Title} onChange={y => setTitle(y.target.value)} />
+                            <Input
+                                disabled={UserSession?.permission.MinuteType !== 2}
+                                placeholder="Titulo"
+                                value={Title}
+                                onChange={y => setTitle(y.target.value)}
+
+                            />
 
                         </div>
                         <hr />
                         <Card className="p-4 mx-4">
-                            <Button variant={"default"} onClick={t => {
-                                setFields([...fields, {
-                                    caption: "Campo sin titulo",
-                                    type: "none",
-                                    name: "field" + (fields.length + 1),
-                                    placeholder: "",
+                            <Button
+                                disabled={UserSession?.permission.MinuteType !== 2}
+                                variant={"default"}
+                                onClick={t => {
+                                    setFields([...fields, {
+                                        caption: "Campo sin titulo",
+                                        type: "none",
+                                        name: "field" + (fields.length + 1),
+                                        placeholder: "",
 
-                                }])
-                            }}>
+                                    }])
+                                }}>
                                 <PlusCircle />
                                 Crear
                             </Button>
@@ -112,6 +123,9 @@ export function MinuteTypeCard({ minuteType }: MinuteTypeCardProps) {
                                             index={i}
                                             key={x.name}
                                             setAllFields={ll => setFields(ll)}
+                                            disabled={UserSession?.permission.MinuteType !== 2}
+
+
                                         />
                                     )
                                 })
@@ -123,7 +137,10 @@ export function MinuteTypeCard({ minuteType }: MinuteTypeCardProps) {
                                     Cerrar
                                 </Button>
                             </SheetClose>
-                            <Button variant={"default"} disabled={loading} onClick={() => save()}>
+                            <Button
+                                disabled={loading || UserSession?.permission.MinuteType !== 2}
+                                variant={"default"}
+                                onClick={() => save()}>
                                 <Save />
                                 Guardar
                             </Button>
@@ -156,7 +173,7 @@ export function CustomFieldRender({
     ...props
 }: CustomFieldRenderProps) {
 
-    value = value === undefined ?defaultValue:value;
+    value = value === undefined ? defaultValue : value;
 
     switch (field.type) {
         case "none":
@@ -164,39 +181,39 @@ export function CustomFieldRender({
             return <></>
         case "text":
 
-            return <Input 
-                className={className} 
-                placeholder={field.placeholder||""} 
+            return <Input
+                className={className}
+                placeholder={field.placeholder || ""}
                 value={value as string}
                 onChange={(x) => onChangeValue(x.target.value, field.name)}
-                />
+            />
         case "number":
 
-            return <Input 
-                className={className} 
-                placeholder={field.placeholder||""} 
+            return <Input
+                className={className}
+                placeholder={field.placeholder || ""}
                 type="number"
                 value={value as number}
                 onChange={(x) => onChangeValue(x.target.value, field.name)}
                 {
-                    ...(field.range !== 0?{
-                        max: field.max,
-                        min: field.min,
-                    }:{})
+                ...(field.range !== 0 ? {
+                    max: field.max,
+                    min: field.min,
+                } : {})
                 }
-                />
+            />
         case "date":
 
-            return <InputCalendar 
-                className={className} 
+            return <InputCalendar
+                className={className}
                 // placeholder={field.placeholder||""} 
                 // type="number"
-                defaultValue={field.range===0 ? new Date() : value as Date}
+                defaultValue={field.range === 0 ? new Date() : value as Date}
                 onChangeValue={(x) => onChangeValue(x, field.name)}
-                
-                />
-        
-        
+
+            />
+
+
 
         default:
             return <>¿{field.type}?</>
@@ -208,7 +225,8 @@ export interface CustomFieldMakerProps {
     field: ICustomField;
     allFields: ICustomField[];
     index: number;
-    setAllFields: (set: ICustomField[]) => void
+    setAllFields: (set: ICustomField[]) => void;
+    disabled?: boolean;
 
 }
 
@@ -217,13 +235,15 @@ export function CustomFieldMaker(
         field,
         allFields,
         index,
-        setAllFields
+        setAllFields,
+        disabled
     }: CustomFieldMakerProps
 ) {
 
     const i = index;
     const x = field;
     const fields = allFields;
+    disabled = disabled || false;
 
     const isInit = i === 0;
     const isLast = fields.length === (i + 1);
@@ -250,7 +270,7 @@ export function CustomFieldMaker(
                     <Label className="font-bold">
                         clave
                     </Label>
-                    <Input value={codeName} onChange={(o) => {
+                    <Input disabled={disabled} value={codeName} onChange={(o) => {
                         x.name = caption2Name(o.target.value);
 
                         setCodeName(x.name);
@@ -261,7 +281,7 @@ export function CustomFieldMaker(
                     <Label className="font-bold">
                         Titulo
                     </Label>
-                    <Input value={caption} onChange={(o) => {
+                    <Input disabled={disabled} value={caption} onChange={(o) => {
                         x.caption = o.target.value;
 
                         setCaption(x.caption);
@@ -271,7 +291,7 @@ export function CustomFieldMaker(
                 </div>
             </div>
             <div className="flex w-full">
-                <Select value={type} onValueChange={o => {
+                <Select value={type} disabled={disabled} onValueChange={o => {
                     x.type = o as any
                     x.defaultValue = undefined;
                     x.range = 0;
@@ -310,7 +330,7 @@ export function CustomFieldMaker(
                         <Label className="mb-2">
                             Texto por defecto:
                         </Label>
-                        <Input value={defaultValue || ""} onChange={(o) => {
+                        <Input disabled={disabled} value={defaultValue || ""} onChange={(o) => {
                             x.defaultValue = (o.target.value);
 
                             setDefaultValue(x.defaultValue);
@@ -321,7 +341,7 @@ export function CustomFieldMaker(
                         <Label className="mb-2">
                             Valor por defecto:
                         </Label>
-                        <Input type="number" value={defaultValue || 0} onChange={(o) => {
+                        <Input disabled={disabled} type="number" value={defaultValue || 0} onChange={(o) => {
                             x.defaultValue = (o.target.valueAsNumber);
 
                             // setFields([...fields]);
@@ -329,7 +349,7 @@ export function CustomFieldMaker(
 
                             // setFields(fields);
                         }} />
-                        <Select value={(RangeState + "")} onValueChange={o => {
+                        <Select disabled={disabled} value={(RangeState + "")} onValueChange={o => {
                             x.range = parseInt(o);
 
                             // setFields([...fields]);
@@ -357,7 +377,7 @@ export function CustomFieldMaker(
                         `}>
                             <div>
                                 <Label className="font-bold">Min</Label>
-                                <Input type="number" value={min || 0} onChange={(o) => {
+                                <Input disabled={disabled} type="number" value={min || 0} onChange={(o) => {
                                     x.min = (o.target.valueAsNumber);
 
                                     setMin(x.min)
@@ -366,7 +386,7 @@ export function CustomFieldMaker(
                             </div>
                             <div>
                                 <Label className="font-bold">Max</Label>
-                                <Input type="number" value={max || 0} onChange={(o) => {
+                                <Input disabled={disabled} type="number" value={max || 0} onChange={(o) => {
                                     x.max = (o.target.valueAsNumber);
 
                                     setMax(x.max)
@@ -380,7 +400,7 @@ export function CustomFieldMaker(
                         <Label className="mb-2">
                             Fecha por defecto
                         </Label>
-                        <Select value={(RangeState + "")} onValueChange={o => {
+                        <Select disabled={disabled} value={(RangeState + "")} onValueChange={o => {
                             x.range = parseInt(o);
 
                             setRangeValue(x.range)
@@ -405,7 +425,7 @@ export function CustomFieldMaker(
                         ${RangeState === 0 ? "hidden" : ""}
                         `}>
                             <Label className="font-bold">Fecha por defecto:</Label>
-                            <InputCalendar defaultValue={defaultValue || new Date()} onChangeValue={o => {
+                            <InputCalendar disabled={disabled} defaultValue={defaultValue || new Date()} onChangeValue={o => {
                                 x.defaultValue = o || new Date();
 
                                 setDefaultValue(x.defaultValue);
@@ -417,7 +437,7 @@ export function CustomFieldMaker(
             </div>
             <div className="flex flex-row w-full mt-2 justify-between">
                 <div>
-                    <Button className={isInit ? "hidden" : ""} variant={"outline"} onClick={() => {
+                    <Button disabled={disabled} className={isInit ? "hidden" : ""} variant={"outline"} onClick={() => {
                         const [n1, n2] = [allFields[i], allFields[i - 1]];
 
                         const newAllFields = allFields.map((l, lk) => {
@@ -437,7 +457,7 @@ export function CustomFieldMaker(
                     }}>
                         <ArrowUp />
                     </Button>
-                    <Button className={isLast ? "hidden" : ""} variant={"outline"} onClick={() => {
+                    <Button disabled={disabled} className={isLast ? "hidden" : ""} variant={"outline"} onClick={() => {
                         const [n1, n2] = [allFields[i], allFields[i + 1]];
 
                         const newAllFields = allFields.map((l, lk) => {
@@ -462,7 +482,7 @@ export function CustomFieldMaker(
 
                 </div>
                 <div>
-                    <Button variant={"destructive"} onClick={() => {
+                    <Button disabled={disabled} variant={"destructive"} onClick={() => {
                         const newAllFields = allFields.filter((j, lk) => lk !== i);
 
                         setAllFields(newAllFields)

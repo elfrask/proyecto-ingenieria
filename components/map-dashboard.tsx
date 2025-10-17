@@ -26,7 +26,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ArrowDown, Info, LogOut, LucideChevronDown, Pencil, PlusCircle, Route, Save, Trash2 } from "lucide-react";
 // import { useRouter } from "next/router";
-import { getSession } from "@/lib/auth";
+import { getSession, logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { Form } from "./ui/form";
@@ -39,7 +39,7 @@ import { Textarea } from "./ui/textarea";
 import type { RootFilterQuery } from "mongoose";
 import { Calendar } from "./ui/calendar";
 import { InputCalendar } from "./input-calendar";
-import { range } from "@/lib/utils";
+import { HTML, range } from "@/lib/utils";
 // import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 // import { Button } from "./ui/button";
 // import React, { ReactNode, useState } from "react";
@@ -68,7 +68,7 @@ const IconMarker = L.icon({
     shadowSize: [41, 41],
 })
 
-
+const UserSession = await getSession();
 
 const position: LatLngExpression = [10.15114, -64.68162];
 
@@ -107,12 +107,12 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
     const [minuteValue, setMinuteValue] = useState(minute);
     const [minuteTypes, setMinuteTypes] = useState<IMinuteType[]>([]);
     const [loadingTypes, setLoadingTypes] = useState(false);
-    const [TypeInstance, setTypeInstance] = useState<IMinuteType|null>(null)
+    const [TypeInstance, setTypeInstance] = useState<IMinuteType | null>(null)
 
     // const TypeInstance = minuteValue.type
 
     useEffect(() => {
-        minuteTypes.forEach(x=> {
+        minuteTypes.forEach(x => {
             if (x.typeName === minuteValue.type) {
                 setTypeInstance(x)
             };
@@ -148,10 +148,10 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
     }, []);
 
     function setFieldData(value: CustomFieldValueType, NAME: string, type: (typeof typesFields)[number]["type"]) {
-        
+
         setMinuteValue({
             ...minuteValue,
-            fields:{
+            fields: {
                 ...minuteValue.fields,
                 [NAME]: value,
             }
@@ -177,6 +177,7 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
                 </Label>
                 <Input
                     required
+                    disabled={UserSession?.permission.Minute !== 2}
                     placeholder="titulo" className="w-full"
                     value={minuteValue.title} onChange={x => setMinuteValue({ ...minuteValue, title: x.target.value })}
                 />
@@ -186,6 +187,7 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
                     Descripción
                 </Label>
                 <Textarea
+                    disabled={UserSession?.permission.Minute !== 2}
 
                     placeholder="descripción" className="w-full resize-none h-48"
                     value={minuteValue.description} onChange={x => setMinuteValue({ ...minuteValue, description: x.target.value })}
@@ -195,7 +197,12 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
                 <Label>
                     Tipo
                 </Label>
-                <Select required value={minuteValue.type} onValueChange={x => setMinuteValue({ ...minuteValue, type: x })}>
+                <Select
+                    disabled={UserSession?.permission.Minute !== 2}
+                    required
+                    value={minuteValue.type}
+                    onValueChange={x => setMinuteValue({ ...minuteValue, type: x })}
+                >
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="tipo de minuta" />
 
@@ -218,11 +225,11 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
             </div>
             <div>
                 {
-                    TypeInstance?.fields.map((x, i)=> {
-                        
-                        const value = (minuteValue?.fields||{})[x.name];
+                    TypeInstance?.fields.map((x, i) => {
 
-                        return(
+                        const value = (minuteValue?.fields || {})[x.name];
+
+                        return (
                             <div className="space-y-2">
                                 <Label className="font-bold">
                                     {x.caption}
@@ -235,8 +242,8 @@ export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
                                         setFieldData(val, NAME, x.type)
                                     }}
                                     defaultValue={x.defaultValue}
-    
-                                
+
+
                                 />
                             </div>
                         )
@@ -302,7 +309,6 @@ export function MinuteCard({ id, minute, onDelete, onUpdate }: MinuteCardProps) 
                                         type: result.type
                                     })
 
-                                    // console.log("guardado:", resultado)
 
                                     if (resultado.success) {
                                         toast("La minuta ha sido actualizada", {
@@ -322,7 +328,9 @@ export function MinuteCard({ id, minute, onDelete, onUpdate }: MinuteCardProps) 
                                     }
 
                                 }}>
-                                    <Button className="w-full">
+                                    <Button 
+                                    disabled={UserSession?.permission.Minute !== 2}
+                                    className="w-full">
                                         <Save />
                                         Guardar
                                     </Button>
@@ -340,26 +348,31 @@ export function MinuteCard({ id, minute, onDelete, onUpdate }: MinuteCardProps) 
                         </SheetFooter>
                     </SheetContent>
                 </Sheet>
-                <Button variant={"destructive"} className="w-full" onClick={async () => {
 
-                    const result = await deleteMinute(minute.id as number);
+                <Button
+                    disabled={UserSession?.permission.Minute !== 2}
+                    variant={"destructive"}
+                    className="w-full"
+                    onClick={async () => {
 
-                    if (result.success) {
-                        toast("La minuta ha sido eliminada", {
-                            style: { color: "green" },
-                            richColors: true
-                        })
-                        if (onDelete) {
-                            onDelete(minute);
+                        const result = await deleteMinute(minute.id as number);
+
+                        if (result.success) {
+                            toast("La minuta ha sido eliminada", {
+                                style: { color: "green" },
+                                richColors: true
+                            })
+                            if (onDelete) {
+                                onDelete(minute);
+                            }
+                        } else {
+                            toast("Hubo un problema al eliminar al minuta", {
+                                style: { color: "green" },
+                                richColors: true,
+                                description: result.msg
+                            })
                         }
-                    } else {
-                        toast("Hubo un problema al eliminar al minuta", {
-                            style: { color: "green" },
-                            richColors: true,
-                            description: result.msg
-                        })
-                    }
-                }}>
+                    }}>
                     <Trash2 />
                     Eliminar
                 </Button>
@@ -393,6 +406,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
 
     const [Minutes, setMinutes] = useState<Minute[]>([]);
     // const [ValueId, setId] = useState(id);
+
 
     const dat: Mrk = {
         lat: ValueLat,
@@ -487,16 +501,21 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
 
                 </div>
                 <div className="flex flex-wrap flex-row space-x-2">
-                    <Button variant={"destructive"} onClick={async () => {
+                    {
+                        UserSession?.permission.Markers === 2 ?
+                            <Button variant={"destructive"} onClick={async () => {
 
-                        deleteMarker(id as number)
-                        if (onDelete) {
-                            onDelete(dat)
-                        }
-                    }}>
-                        <Trash2 />
-                        Eliminar
-                    </Button>
+                                deleteMarker(id as number)
+                                if (onDelete) {
+                                    onDelete(dat)
+                                }
+                            }}>
+                                <Trash2 />
+                                Eliminar
+                            </Button>
+                            : []
+                    }
+
                     <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                         <SheetTrigger asChild>
                             <Button variant={"secondary"}>
@@ -524,6 +543,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                                 Asunto
                                             </Label>
                                             <Input
+                                                disabled={UserSession?.permission.Markers !== 2}
                                                 placeholder="asunto" className="w-full"
                                                 value={ValueSubject} onChange={x => setSubject(x.target.value)}
                                             />
@@ -533,6 +553,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                                 Descripción
                                             </Label>
                                             <Input
+                                                disabled={UserSession?.permission.Markers !== 2}
                                                 placeholder="descripción" className="w-full"
                                                 value={ValueDescription} onChange={x => setDescription(x.target.value)}
                                             />
@@ -542,6 +563,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                                 Punto de referencia
                                             </Label>
                                             <Input
+                                                disabled={UserSession?.permission.Markers !== 2}
                                                 placeholder="punto de referencia" className="w-full"
                                                 value={ValueReference} onChange={x => setReference(x.target.value)}
                                             />
@@ -556,7 +578,11 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
 
                                     <Sheet open={openSheetCreateMinute} onOpenChange={setOpenSheetCreateMinute}>
                                         <SheetTrigger asChild>
-                                            <Button variant={"default"} className="w-full">
+                                            <Button
+                                                disabled={UserSession?.permission.Minute !== 2}
+
+                                                variant={"default"}
+                                                className="w-full">
                                                 <PlusCircle />
                                                 Crear minuta
                                             </Button>
@@ -573,7 +599,7 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                             </SheetHeader>
                                             <div className="w-full overflow-auto h-auto">
                                                 <Card className="p-4 m-2">
-                                                    <FormMinute minute={{fields:{}}} onSubmit={async (result) => {
+                                                    <FormMinute minute={{ fields: {} }} onSubmit={async (result) => {
 
 
                                                         const resultado = await createMinute({
@@ -617,7 +643,6 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                     </Sheet>
                                     {
                                         Minutes.map(x => {
-                                            // console.log(x)
 
                                             return (
                                                 <MinuteCard
@@ -633,7 +658,9 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
                                 </div>
                             </div>
                             <SheetFooter>
-                                <Button className="w-full" variant={"default"} onClick={async () => {
+                                <Button 
+                                disabled={UserSession?.permission.Markers !== 2}
+                                className="w-full" variant={"default"} onClick={async () => {
 
                                     const result = await updateMarker(id as number, {
                                         reference: ValueReference,
@@ -677,6 +704,25 @@ export function MarkerData({ lat, lng, report_date, description, id, reference, 
 }
 
 const yearRange = [2000, 2050]
+
+export interface SearchParametersProps {
+    initialFilterTime: Date;
+    dueFilterTime: Date;
+    title: string;
+    description: string;
+    
+}
+
+interface propsDialogSearchParameters extends HTML {
+    onSearch: (SearchParameters: SearchParametersProps) => void;
+
+}
+
+export function DialogSearchParameters({onSearch}: propsDialogSearchParameters) {
+    
+}
+
+
 
 
 
@@ -734,7 +780,6 @@ export function MainPage() {
 
         let filterMarker: RootFilterQuery<Mrk> = {};
 
-        // console.log(TypeFilterTime, [initialFilterTime, dueFilterTime])
 
         if (TypeFilterTime !== "all") {
 
@@ -811,12 +856,10 @@ export function MainPage() {
         // (Esto es un hack; la forma recomendada es useMap())
 
 
-        // console.log("latlng", x, y, map)
         if (map) {
             // Convertir las coordenadas de píxel a coordenadas LatLng del mapa
             const latlng = map.containerPointToLatLng(pixelPoint);
             clickedLatLngRef.current = latlng;
-            // console.log(latlng)
         }
 
         // El `onOpenChange` del ContextMenu raíz controlará el `setIsContextMenuOpen(true)`
@@ -844,7 +887,6 @@ export function MainPage() {
 
 
             // setMarkers((prevMarkers) => [...prevMarkers, newPosition]);
-            // console.log('Nuevo marcador añadido en:', newPosition);
         }
         // El ContextMenu se cerrará automáticamente al hacer clic en un ContextMenuItem
     };
@@ -865,7 +907,6 @@ export function MainPage() {
                             <HandlerMap />
 
                             {markers.map((marker, idx) => {
-                                // console.log(marker)
 
 
                                 return (
@@ -904,7 +945,6 @@ export function MainPage() {
                         const description = _FormData.get("description") as string;
                         const reference = _FormData.get("reference") as string;
                         await handleAddPoint(subject, description, reference);
-                        // console.log({subject, description, reference})
                         setCreateMarkerDialogOpen(false);
 
                     }}>
@@ -950,6 +990,15 @@ export function MainPage() {
                 min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
                 flex-wrap p-2 items-center
                 ">
+                    <Dialog >
+                        <DialogTrigger>
+                            <Button >
+                                <LucideIcons.Search />
+                                Buscar...
+                            </Button>
+
+                        </DialogTrigger>
+                    </Dialog>
                     <Select value={TypeFilterTime} onValueChange={x => setTypeFilterTime(x as any)} >
                         <SelectTrigger>
                             <SelectValue placeholder="Periodo no definido" className="w-auto" />
@@ -990,7 +1039,6 @@ export function MainPage() {
                                         const final = new Date(x);
                                         final.setDate(final.getDate() + 1);
 
-                                        // console.log()
 
 
                                         setDueFilterTime(
@@ -1134,8 +1182,18 @@ export function MainPage() {
                 </div>
                 <div className="
                 min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
-                flex-wrap p-2 items-center
+                flex-wrap p-2 items-center lg:justify-end
                 ">
+                    <Button onClick={async () =>  {
+
+                        await logout();
+
+                        // route.refresh();
+                        window.location.href = "/";
+                    }}>
+                        <LogOut />
+                        Cerrar sesión
+                    </Button>
 
                 </div>
 
@@ -1153,7 +1211,7 @@ export function MainPage() {
                 <ConfigPage>
 
                 </ConfigPage>
-            </ButtonFloat> 
+            </ButtonFloat>
         </div>
     )
 }
