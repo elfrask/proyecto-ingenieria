@@ -23,7 +23,7 @@ export interface ButtonFloatProps {
 export default function ButtonFloat({
     icon,
     bgColor = "#2563eb",
-    position = { bottom: 32, right: 32 },
+    position = { bottom: 30, right: 32 },
     children,
     size = 56,
     ariaLabel = "Abrir diálogo",

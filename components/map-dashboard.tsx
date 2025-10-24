@@ -48,6 +48,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import ConfigPage from "./config-page";
 import ButtonFloat from "./button-float";
 import { CustomFieldRender, CustomFieldValueType } from "./custom-fields";
+import { CustomMarker, MarkerData } from "./marker-components";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
@@ -59,649 +60,12 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'leaflet/dist/images/marker-shadow.png',
 });
 
-const IconMarker = L.icon({
-    iconUrl: "/images/markers/marker-icon.png",
-    shadowUrl: "leaflet/dist/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-})
 
-const UserSession = await getSession();
 
 const position: LatLngExpression = [10.15114, -64.68162];
 
-export interface CustomMarkerProps extends Omit<MarkerProps, 'icon'> {
-    icon?: string;
-}
 
-export function CustomMarker({ icon, ...props }: CustomMarkerProps) {
 
-
-    return (
-        <Marker
-            icon={L.icon({
-                iconUrl: `/images/markers/${icon || "marker-icon"}.png`,
-                shadowUrl: "/images/marker-shadow.png",
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41],
-            })}
-            {...props}
-        >
-
-        </Marker>
-    )
-}
-
-export interface MinuteFormProps {
-    minute: Minute;
-    onSubmit?: (e: Minute) => void,
-    children: ReactNode;
-}
-
-export function FormMinute({ minute, onSubmit, children }: MinuteFormProps) {
-
-    const [minuteValue, setMinuteValue] = useState(minute);
-    const [minuteTypes, setMinuteTypes] = useState<IMinuteType[]>([]);
-    const [loadingTypes, setLoadingTypes] = useState(false);
-    const [TypeInstance, setTypeInstance] = useState<IMinuteType | null>(null)
-
-    // const TypeInstance = minuteValue.type
-
-    useEffect(() => {
-        minuteTypes.forEach(x => {
-            if (x.typeName === minuteValue.type) {
-                setTypeInstance(x)
-            };
-        });
-    }, [minuteValue.type, minuteTypes])
-
-    async function loadMinuteTypes() {
-        setLoadingTypes(true);
-        try {
-            const result = await getAllMinuteTypes();
-            if (result.success && result.result) {
-                setMinuteTypes([...result.result, {
-                    caption: "Simple",
-                    id: 999,
-                    fields: [],
-                    typeName: "simple"
-                }]);
-            } else {
-                toast("Error al cargar tipos de minutas", { description: result.msg, style: { color: "crimson" }, richColors: true });
-            }
-        } catch (e: any) {
-            toast(e.message || "Error inesperado", {
-                style: { color: "crimson" }, richColors: true,
-                description: e.message || e
-            });
-        } finally {
-            setLoadingTypes(false);
-        }
-    }
-
-    useEffect(() => {
-        loadMinuteTypes();
-    }, []);
-
-    function setFieldData(value: CustomFieldValueType, NAME: string, type: (typeof typesFields)[number]["type"]) {
-
-        setMinuteValue({
-            ...minuteValue,
-            fields: {
-                ...minuteValue.fields,
-                [NAME]: value,
-            }
-        })
-    }
-
-    return (
-        <form
-            className="w-full space-y-4 *:space-y-2"
-            onSubmit={x => {
-                x.preventDefault();
-
-                if (onSubmit) {
-                    onSubmit(minuteValue)
-                }
-
-            }}
-        >
-
-            <div>
-                <Label>
-                    Titulo
-                </Label>
-                <Input
-                    required
-                    disabled={UserSession?.permission.Minute !== 2}
-                    placeholder="titulo" className="w-full"
-                    value={minuteValue.title} onChange={x => setMinuteValue({ ...minuteValue, title: x.target.value })}
-                />
-            </div>
-            <div>
-                <Label>
-                    Descripción
-                </Label>
-                <Textarea
-                    disabled={UserSession?.permission.Minute !== 2}
-
-                    placeholder="descripción" className="w-full resize-none h-48"
-                    value={minuteValue.description} onChange={x => setMinuteValue({ ...minuteValue, description: x.target.value })}
-                />
-            </div>
-            <div>
-                <Label>
-                    Tipo
-                </Label>
-                <Select
-                    disabled={UserSession?.permission.Minute !== 2}
-                    required
-                    value={minuteValue.type}
-                    onValueChange={x => setMinuteValue({ ...minuteValue, type: x })}
-                >
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="tipo de minuta" />
-
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            {
-                                minuteTypes.map(x => {
-
-                                    return (
-                                        <SelectItem value={x.typeName} key={x.typeName}>
-                                            {x.caption}
-                                        </SelectItem>
-                                    )
-                                })
-                            }
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                {
-                    TypeInstance?.fields.map((x, i) => {
-
-                        const value = (minuteValue?.fields || {})[x.name];
-
-                        return (
-                            <div className="space-y-2">
-                                <Label className="font-bold">
-                                    {x.caption}
-                                </Label>
-                                <CustomFieldRender
-                                    field={x}
-                                    rowName={x.name}
-                                    value={value}
-                                    onChangeValue={(val, NAME) => {
-                                        setFieldData(val, NAME, x.type)
-                                    }}
-                                    defaultValue={x.defaultValue}
-
-
-                                />
-                            </div>
-                        )
-                    })
-                }
-            </div>
-            <div>
-                {children}
-            </div>
-        </form>
-    )
-}
-
-export interface MinuteCardProps {
-    id: number;
-    minute: Minute;
-    onDelete?: (e: Minute) => void,
-    onUpdate?: (e: Minute) => void,
-
-}
-
-export function MinuteCard({ id, minute, onDelete, onUpdate }: MinuteCardProps) {
-
-    const [openSheet, setOpenSheet] = useState(false);
-
-    return (
-        <Card className="flex flex-row py-4">
-            <CardHeader className="flex-1 block px-4">
-                <CardTitle>
-                    {minute.title}
-                </CardTitle>
-                <CardDescription>
-                    {minute.description?.slice(0, 150)}{(minute.description?.length as number) > 150 && "..."}
-                </CardDescription>
-            </CardHeader>
-            <div className="flex flex-col items-center p-2 space-y-2">
-                <Sheet open={openSheet} onOpenChange={setOpenSheet}>
-                    <SheetTrigger asChild>
-                        <Button variant={"outline"} className="w-full">
-                            <Pencil />
-                            Editar
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent className="w-full sm:w-[540px] flex flex-col">
-                        <SheetHeader>
-                            <SheetTitle>
-                                Editar minuta
-                            </SheetTitle>
-                            <SheetDescription>
-                                Aquí puedes editar el contenido de la minuta
-                            </SheetDescription>
-
-                        </SheetHeader>
-                        <div className="w-full h-auto overflow-auto">
-
-                            <Card className="p-4 m-2">
-                                <FormMinute minute={minute} onSubmit={async (result) => {
-
-                                    const resultado = await updateMinute(minute.id as number, {
-                                        description: result.description,
-                                        fields: result.fields,
-                                        title: result.title,
-                                        type: result.type
-                                    })
-
-
-                                    if (resultado.success) {
-                                        toast("La minuta ha sido actualizada", {
-                                            style: { color: "green" },
-                                            richColors: true
-                                        })
-                                        setOpenSheet(false)
-                                        if (onUpdate) {
-                                            onUpdate(result)
-                                        }
-                                    } else {
-                                        toast("Hubo un problema al actualizar la minuta", {
-                                            style: { color: "green" },
-                                            richColors: true,
-                                            description: resultado.msg
-                                        })
-                                    }
-
-                                }}>
-                                    <Button 
-                                    disabled={UserSession?.permission.Minute !== 2}
-                                    className="w-full">
-                                        <Save />
-                                        Guardar
-                                    </Button>
-                                </FormMinute>
-
-                            </Card>
-                        </div>
-                        <SheetFooter>
-                            <SheetClose asChild>
-                                <Button className="w-full" variant={"outline"}>
-                                    <LogOut />
-                                    Cancelar
-                                </Button>
-                            </SheetClose>
-                        </SheetFooter>
-                    </SheetContent>
-                </Sheet>
-
-                <Button
-                    disabled={UserSession?.permission.Minute !== 2}
-                    variant={"destructive"}
-                    className="w-full"
-                    onClick={async () => {
-
-                        const result = await deleteMinute(minute.id as number);
-
-                        if (result.success) {
-                            toast("La minuta ha sido eliminada", {
-                                style: { color: "green" },
-                                richColors: true
-                            })
-                            if (onDelete) {
-                                onDelete(minute);
-                            }
-                        } else {
-                            toast("Hubo un problema al eliminar al minuta", {
-                                style: { color: "green" },
-                                richColors: true,
-                                description: result.msg
-                            })
-                        }
-                    }}>
-                    <Trash2 />
-                    Eliminar
-                </Button>
-
-            </div>
-        </Card>
-    )
-
-}
-
-
-export interface MkDProps extends Mrk {
-    onDelete?: (e: Mrk) => void,
-    onUpdate?: (e: Mrk) => void,
-    // onUpdate: (e: Mrk) => void,
-}
-
-export function MarkerData({ lat, lng, report_date, description, id, reference, subject, onDelete, onUpdate }: MkDProps) {
-
-    let DATE_REPORT: Date = new Date();
-
-    const [openSheet, setOpenSheet] = useState(false);
-    const [openSheetCreateMinute, setOpenSheetCreateMinute] = useState(false);
-
-    const [ValueLat, setLat] = useState(lat);
-    const [ValueLng, setLng] = useState(lng);
-    const [ValueReportDate, setReportDate] = useState(report_date);
-    const [ValueDescription, setDescription] = useState(description);
-    const [ValueReference, setReference] = useState(reference);
-    const [ValueSubject, setSubject] = useState(subject);
-
-    const [Minutes, setMinutes] = useState<Minute[]>([]);
-    // const [ValueId, setId] = useState(id);
-
-
-    const dat: Mrk = {
-        lat: ValueLat,
-        lng: ValueLng,
-        report_date: ValueReportDate,
-        description: ValueDescription,
-        id,
-        reference: ValueReference,
-        subject: ValueSubject
-    }
-
-    async function allLoadData() {
-
-        const result = await getMarker(id as number);
-
-        if (!result.success) {
-
-            toast("No se pudo cargar la data del punto: " + subject, {
-                richColors: true,
-                description: result.msg,
-                style: { color: "crimson" }
-            });
-
-            return null;
-        }
-        const marker = result.result as Mrk;
-
-        setSubject(marker.subject);
-        setDescription(marker.description);
-        setReference(marker.reference);
-
-        const MinutesResponse = await getAllMinutes({ marker_id: id }, {});
-
-        if (!MinutesResponse.success) {
-            toast("No se pudo cargar las minutas de: " + subject, {
-                richColors: true,
-                description: result.msg,
-                style: { color: "crimson" }
-            });
-
-            return null;
-        }
-
-        setMinutes(MinutesResponse.result as Minute[])
-
-    }
-
-    useEffect(() => {
-
-        if (openSheet) {
-            allLoadData();
-        }
-
-    }, [openSheet])
-
-    if (ValueReportDate) {
-        if (ValueReportDate instanceof Date) {
-            DATE_REPORT = ValueReportDate;
-        } else {
-            DATE_REPORT = new Date(ValueReportDate)
-        }
-    }
-
-    return (
-        <div className="w-full flex flex-col space-x-2">
-            <div className="w-full">
-                <Label className="font-semibold text-lg">
-                    {ValueSubject}
-                </Label>
-                <p className="text-gray-500 text-sm">
-                    {ValueDescription}
-                </p>
-                <p className="text-gray-500 text-sm">
-                    referencia: {ValueReference}
-                </p>
-
-                <div className="flex justify-between">
-                    <Label className="font-extralight text-lg">
-                        Lat: {ValueLat.toFixed(4)}
-                    </Label>
-                    <Label className="font-extralight text-lg ">
-                        Lng: {ValueLng.toFixed(4)}
-                    </Label>
-                    <Label className="font-extralight text-lg">
-                        {DATE_REPORT.toLocaleDateString("es-ES", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric"
-                        })}
-                    </Label>
-
-
-                </div>
-                <div className="flex flex-wrap flex-row space-x-2">
-                    {
-                        UserSession?.permission.Markers === 2 ?
-                            <Button variant={"destructive"} onClick={async () => {
-
-                                deleteMarker(id as number)
-                                if (onDelete) {
-                                    onDelete(dat)
-                                }
-                            }}>
-                                <Trash2 />
-                                Eliminar
-                            </Button>
-                            : []
-                    }
-
-                    <Sheet open={openSheet} onOpenChange={setOpenSheet}>
-                        <SheetTrigger asChild>
-                            <Button variant={"secondary"}>
-                                <Info />
-                                Información
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent className="w-full sm:w-[540px] flex flex-col">
-                            <SheetHeader>
-                                <SheetTitle>Información detallada</SheetTitle>
-                                <SheetDescription>
-                                    Aquí puedes ver y gestionar el contenido de las minutas de un punto de riesgo
-                                </SheetDescription>
-                            </SheetHeader>
-                            <div className="overflow-auto">
-                                <div className="p-4">
-                                    <form
-                                        className="space-y-4 *:space-y-2 border-b pb-3 border-gray-500"
-                                        onSubmit={x => {
-                                            x.preventDefault();
-
-                                        }}>
-                                        <div>
-                                            <Label>
-                                                Asunto
-                                            </Label>
-                                            <Input
-                                                disabled={UserSession?.permission.Markers !== 2}
-                                                placeholder="asunto" className="w-full"
-                                                value={ValueSubject} onChange={x => setSubject(x.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>
-                                                Descripción
-                                            </Label>
-                                            <Input
-                                                disabled={UserSession?.permission.Markers !== 2}
-                                                placeholder="descripción" className="w-full"
-                                                value={ValueDescription} onChange={x => setDescription(x.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>
-                                                Punto de referencia
-                                            </Label>
-                                            <Input
-                                                disabled={UserSession?.permission.Markers !== 2}
-                                                placeholder="punto de referencia" className="w-full"
-                                                value={ValueReference} onChange={x => setReference(x.target.value)}
-                                            />
-                                        </div>
-
-                                    </form>
-
-                                </div>
-                                <div className="p-4 h-auto overflow-hidden space-y-3">
-
-                                    {/* <div className="w-full h-full overflow-auto flex flex-col"> */}
-
-                                    <Sheet open={openSheetCreateMinute} onOpenChange={setOpenSheetCreateMinute}>
-                                        <SheetTrigger asChild>
-                                            <Button
-                                                disabled={UserSession?.permission.Minute !== 2}
-
-                                                variant={"default"}
-                                                className="w-full">
-                                                <PlusCircle />
-                                                Crear minuta
-                                            </Button>
-                                        </SheetTrigger>
-                                        <SheetContent className="w-full sm:w-[540px] flex flex-col">
-                                            <SheetHeader>
-                                                <SheetTitle>
-                                                    Crear minuta
-                                                </SheetTitle>
-                                                <SheetDescription>
-                                                    Aquí puedes crear la minuta
-                                                </SheetDescription>
-
-                                            </SheetHeader>
-                                            <div className="w-full overflow-auto h-auto">
-                                                <Card className="p-4 m-2">
-                                                    <FormMinute minute={{ fields: {} }} onSubmit={async (result) => {
-
-
-                                                        const resultado = await createMinute({
-                                                            description: result.description,
-                                                            fields: result.fields,
-                                                            marker_id: id,
-                                                            title: result.title,
-                                                            type: result.type
-                                                        });
-
-                                                        if (resultado.success) {
-                                                            allLoadData();
-                                                            setOpenSheetCreateMinute(false);
-
-                                                        } else {
-                                                            toast("No se pudo crear la minuta:", {
-                                                                richColors: true,
-                                                                style: { color: "crimson" }
-                                                            })
-                                                        }
-
-
-                                                    }}>
-                                                        <Button className="w-full">
-                                                            <Save />
-                                                            Guardar
-                                                        </Button>
-                                                    </FormMinute>
-
-                                                </Card>
-                                            </div>
-                                            <SheetFooter>
-                                                <SheetClose asChild>
-                                                    <Button className="w-full" variant={"outline"}>
-                                                        <LogOut />
-                                                        Cancelar
-                                                    </Button>
-                                                </SheetClose>
-                                            </SheetFooter>
-                                        </SheetContent>
-                                    </Sheet>
-                                    {
-                                        Minutes.map(x => {
-
-                                            return (
-                                                <MinuteCard
-                                                    id={x.id as number} minute={x} key={x.id}
-                                                    onDelete={(x) => allLoadData()}
-                                                    onUpdate={(x) => allLoadData()}
-                                                />
-                                            )
-                                        }).reverse()
-                                    }
-                                    {/* </div> */}
-
-                                </div>
-                            </div>
-                            <SheetFooter>
-                                <Button 
-                                disabled={UserSession?.permission.Markers !== 2}
-                                className="w-full" variant={"default"} onClick={async () => {
-
-                                    const result = await updateMarker(id as number, {
-                                        reference: ValueReference,
-                                        description: ValueDescription,
-                                        subject: ValueSubject
-                                    })
-
-                                    if (result.success) {
-                                        toast("La marca ha sido actualizada", {
-                                            style: { color: "green" },
-                                            richColors: true
-                                        })
-                                        if (onUpdate) {
-                                            onUpdate(dat);
-                                        }
-                                    } else {
-                                        toast("Hubo un problema al actualizar la marca", {
-                                            style: { color: "green" },
-                                            richColors: true,
-                                            description: result.msg
-                                        })
-                                    }
-                                }}>
-                                    <Save />
-                                    Guardar cambios
-                                </Button>
-                                <SheetClose asChild>
-                                    <Button className="w-full" variant={"outline"}>
-                                        <LogOut />
-                                        Cancelar
-                                    </Button>
-                                </SheetClose>
-                            </SheetFooter>
-                        </SheetContent>
-                    </Sheet>
-                </div>
-
-            </div>
-        </div>
-    )
-}
 
 const yearRange = [2000, 2050]
 
@@ -742,7 +106,10 @@ export function MainPage() {
     const clickedLatLngRef = useRef<L.LatLng | null>(null);
     const route = useRouter()
 
-    const [createMarkerDialogOpen, setCreateMarkerDialogOpen] = useState(false)
+    const [createMarkerDialogOpen, setCreateMarkerDialogOpen] = useState(false);
+    const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+
+    const [searchForTitle, setSearchForTitle] = useState("");
     // Estado para la visibilidad del menú contextual
 
     function setPeriodByMonthAndYear() {
@@ -806,9 +173,9 @@ export function MainPage() {
         loadData()
     }, [])
 
-    useEffect(() => {
-        loadData()
-    }, [initialFilterTime, dueFilterTime, TypeFilterTime])
+    // useEffect(() => {
+    //     loadData()
+    // }, [initialFilterTime, dueFilterTime, TypeFilterTime])
 
     useEffect(() => {
         setPeriodByMonthAndYear();
@@ -990,195 +357,228 @@ export function MainPage() {
                 min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
                 flex-wrap p-2 items-center
                 ">
-                    <Dialog >
-                        <DialogTrigger>
+                    <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+                        <DialogTrigger asChild>
                             <Button >
                                 <LucideIcons.Search />
                                 Buscar...
                             </Button>
 
                         </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    Buscar...
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Ajusta los parametros de búsqueda
+                                </DialogDescription>
+                            </DialogHeader>
+                            <h1>
+                                Tiempo
+                            </h1>
+                            <div className="w-full">
+                                <Select value={TypeFilterTime} onValueChange={x => setTypeFilterTime(x as any)} >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Periodo no definido" className="w-auto" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Periodo</SelectLabel>
+                                            <SelectItem value="day">Por Fecha</SelectItem>
+                                            <SelectItem value="mouth">Por Mes</SelectItem>
+                                            <SelectItem value="year">Por Año</SelectItem>
+                                            <SelectItem value="period">Por Periodo</SelectItem>
+                                            <SelectItem value="all">Todo</SelectItem>
+                                            {/* <SelectItem value="period">Por Periodo</SelectItem> */}
+
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                <div className="flex w-full gap-2 my-2 *:space-y-2">
+                                    {
+                                        TypeFilterTime === "day" &&
+                                        <>
+                                            <div>
+                                                <Label>
+                                                    Fecha:
+                                                </Label>
+                                                <InputCalendar defaultValue={thisDate} onChangeValue={x => { //Busca el bug de la comparacion de fechas (-1 dia)
+
+                                                    setInitialFilterTime(x);
+
+
+                                                    // const final = new Date(
+                                                    //     x.getFullYear(),
+                                                    //     x.getMonth(),
+                                                    //     x.getDate(),
+                                                    //     23, 59, 59, 999
+                                                    // )
+
+                                                    const final = new Date(x);
+                                                    final.setDate(final.getDate() + 1);
+
+
+
+                                                    setDueFilterTime(
+                                                        final
+                                                    );
+
+                                                    // loadData();
+                                                }} />
+
+                                            </div>
+                                        </>
+                                    }
+
+                                    {
+                                        TypeFilterTime === "mouth" &&
+                                        <>
+                                            <div>
+                                                <Label>
+                                                    Año:
+                                                </Label>
+                                                <Select defaultValue={yearFilter + ""} onValueChange={x => { setYearFilter(parseInt(x)) }}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Año" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+
+                                                            {
+                                                                range(yearRange[0], yearRange[1]).map(x => {
+
+
+                                                                    return (
+                                                                        <SelectItem key={x} value={x + ""}>{x}</SelectItem>
+                                                                    )
+                                                                })
+                                                            }
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+
+                                            </div>
+                                            <div>
+                                                <Label>
+                                                    Mes:
+                                                </Label>
+                                                <Select defaultValue={mouthFilter + ""} onValueChange={x => { setMouthFilter(parseInt(x)) }}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Mes" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+
+                                                            {
+                                                                [
+                                                                    "Enero",
+                                                                    "Febrero",
+                                                                    "Marzo",
+                                                                    "Abril",
+                                                                    "Mayo",
+                                                                    "Junio",
+                                                                    "Julio",
+                                                                    "Agosto",
+                                                                    "Septiembre",
+                                                                    "Octubre",
+                                                                    "Noviembre",
+                                                                    "Diciembre"
+                                                                ].map((x, i) => {
+
+
+                                                                    return (
+                                                                        <SelectItem key={x} value={i + ""}>{x}</SelectItem>
+                                                                    )
+                                                                })
+                                                            }
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+
+                                            </div>
+                                        </>
+                                    }
+
+                                    {
+                                        TypeFilterTime === "year" &&
+                                        <>
+                                            <div>
+                                                <Label>
+                                                    Año:
+                                                </Label>
+                                                <Select defaultValue={yearFilter + ""} onValueChange={x => { setYearFilter(parseInt(x)) }}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Año" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+
+                                                            {
+                                                                range(yearRange[0], yearRange[1]).map(x => {
+
+
+                                                                    return (
+                                                                        <SelectItem key={x} value={x + ""}>{x}</SelectItem>
+                                                                    )
+                                                                })
+                                                            }
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+
+                                            </div>
+                                        </>
+                                    }
+
+                                    {
+                                        TypeFilterTime === "period" &&
+                                        <>
+                                            <div>
+                                                <Label>
+                                                    Fecha de inicio:
+                                                </Label>
+                                                <InputCalendar defaultValue={initialFilterTime} onChangeValue={x => setInitialFilterTime(x)} />
+
+                                            </div>
+
+                                            <div>
+                                                <Label>
+                                                    Fecha final:
+                                                </Label>
+                                                <InputCalendar defaultValue={dueFilterTime} onChangeValue={x => setDueFilterTime(new Date(
+                                                    x.getFullYear(),
+                                                    x.getMonth(),
+                                                    x.getDate(),
+                                                    23, 59, 59, 999
+                                                ))} />
+
+                                            </div>
+                                        </>
+                                    }
+
+                                </div>
+                            </div>
+                            <hr />
+                            <h1>
+                                Titulo o descripción
+                            </h1>
+                            <div className="w-full flex gap-2 my-2  *:space-y-2">
+                                <Input value={searchForTitle} onChange={x => setSearchForTitle(x.target.value)} />
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={async x=> {
+                                    // setPeriodByMonthAndYear();
+                                    await loadData()
+                                    setSearchDialogOpen(false)
+                                    
+                                }}>
+                                    <LucideIcons.Search />
+                                    Buscar
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
                     </Dialog>
-                    <Select value={TypeFilterTime} onValueChange={x => setTypeFilterTime(x as any)} >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Periodo no definido" className="w-auto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectLabel>Periodo</SelectLabel>
-                                <SelectItem value="day">Por Fecha</SelectItem>
-                                <SelectItem value="mouth">Por Mes</SelectItem>
-                                <SelectItem value="year">Por Año</SelectItem>
-                                <SelectItem value="period">Por Periodo</SelectItem>
-                                <SelectItem value="all">Todo</SelectItem>
-                                {/* <SelectItem value="period">Por Periodo</SelectItem> */}
-
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    <div className="flex h-auto w-auto pl-3 flex-row space-x-2 *:space-y-1">
-                        {
-                            TypeFilterTime === "day" &&
-                            <>
-                                <div>
-                                    <Label>
-                                        Fecha:
-                                    </Label>
-                                    <InputCalendar defaultValue={thisDate} onChangeValue={x => { //Busca el bug de la comparacion de fechas (-1 dia)
-
-                                        setInitialFilterTime(x);
-
-
-                                        // const final = new Date(
-                                        //     x.getFullYear(),
-                                        //     x.getMonth(),
-                                        //     x.getDate(),
-                                        //     23, 59, 59, 999
-                                        // )
-
-                                        const final = new Date(x);
-                                        final.setDate(final.getDate() + 1);
-
-
-
-                                        setDueFilterTime(
-                                            final
-                                        );
-
-                                        // loadData();
-                                    }} />
-
-                                </div>
-                            </>
-                        }
-
-                        {
-                            TypeFilterTime === "mouth" &&
-                            <>
-                                <div>
-                                    <Label>
-                                        Año:
-                                    </Label>
-                                    <Select defaultValue={yearFilter + ""} onValueChange={x => { setYearFilter(parseInt(x)) }}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Año" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-
-                                                {
-                                                    range(yearRange[0], yearRange[1]).map(x => {
-
-
-                                                        return (
-                                                            <SelectItem key={x} value={x + ""}>{x}</SelectItem>
-                                                        )
-                                                    })
-                                                }
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-
-                                </div>
-                                <div>
-                                    <Label>
-                                        Mes:
-                                    </Label>
-                                    <Select defaultValue={mouthFilter + ""} onValueChange={x => { setMouthFilter(parseInt(x)) }}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Mes" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-
-                                                {
-                                                    [
-                                                        "Enero",
-                                                        "Febrero",
-                                                        "Marzo",
-                                                        "Abril",
-                                                        "Mayo",
-                                                        "Junio",
-                                                        "Julio",
-                                                        "Agosto",
-                                                        "Septiembre",
-                                                        "Octubre",
-                                                        "Noviembre",
-                                                        "Diciembre"
-                                                    ].map((x, i) => {
-
-
-                                                        return (
-                                                            <SelectItem key={x} value={i + ""}>{x}</SelectItem>
-                                                        )
-                                                    })
-                                                }
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-
-                                </div>
-                            </>
-                        }
-
-                        {
-                            TypeFilterTime === "year" &&
-                            <>
-                                <div>
-                                    <Label>
-                                        Año:
-                                    </Label>
-                                    <Select defaultValue={yearFilter + ""} onValueChange={x => { setYearFilter(parseInt(x)) }}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Año" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-
-                                                {
-                                                    range(yearRange[0], yearRange[1]).map(x => {
-
-
-                                                        return (
-                                                            <SelectItem key={x} value={x + ""}>{x}</SelectItem>
-                                                        )
-                                                    })
-                                                }
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-
-                                </div>
-                            </>
-                        }
-
-                        {
-                            TypeFilterTime === "period" &&
-                            <>
-                                <div>
-                                    <Label>
-                                        Fecha de inicio:
-                                    </Label>
-                                    <InputCalendar defaultValue={initialFilterTime} onChangeValue={x => setInitialFilterTime(x)} />
-
-                                </div>
-
-                                <div>
-                                    <Label>
-                                        Fecha final:
-                                    </Label>
-                                    <InputCalendar defaultValue={dueFilterTime} onChangeValue={x => setDueFilterTime(new Date(
-                                        x.getFullYear(),
-                                        x.getMonth(),
-                                        x.getDate(),
-                                        23, 59, 59, 999
-                                    ))} />
-
-                                </div>
-                            </>
-                        }
-
-                    </div>
                 </div>
                 <div className="
                 min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
@@ -1208,9 +608,31 @@ export function MainPage() {
                         Panel de configuraciones, aquí puedes configurar todos los aspectos del sistema
                     </DialogDescription>
                 </DialogHeader>
-                <ConfigPage>
+                <ConfigPage />
+            </ButtonFloat>
 
-                </ConfigPage>
+            <ButtonFloat icon="Activity" className="" position={{ bottom: 100, right: 32 }} size={50} bgColor="#000">
+                <DialogHeader>
+                    <DialogTitle>
+                        Generador de estadísticas
+                    </DialogTitle>
+                    <DialogDescription>
+                        Panel de generar las estadísticas y reportes del sistema
+                    </DialogDescription>
+                </DialogHeader>
+                <ConfigPage />
+            </ButtonFloat>
+            
+            <ButtonFloat icon="Database" className="" position={{ bottom: 170, right: 32 }} size={50} bgColor="#000">
+                <DialogHeader>
+                    <DialogTitle>
+                        Gestionar base de datos
+                    </DialogTitle>
+                    <DialogDescription>
+                        Aquí puedes parametrizar el sistema listas de datos y información del sistema
+                    </DialogDescription>
+                </DialogHeader>
+                <ConfigPage />
             </ButtonFloat>
         </div>
     )

@@ -58,6 +58,7 @@ export async function getSession(): Promise<Session | null> {
     const found = await User.findOne({ user: session.user });
     let Role: IRole = {permission:{}} as IRole
     
+    console.log("verify:", [found, session])
     if (session.user !== "admin") {
       if (!found) return null;
       if (!(found.pass === session.pass)) return null;
