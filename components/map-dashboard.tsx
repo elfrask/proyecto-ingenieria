@@ -622,18 +622,6 @@ export function MainPage() {
                 </DialogHeader>
                 <ConfigPage />
             </ButtonFloat>
-            
-            <ButtonFloat icon="Database" className="" position={{ bottom: 170, right: 32 }} size={50} bgColor="#000">
-                <DialogHeader>
-                    <DialogTitle>
-                        Gestionar base de datos
-                    </DialogTitle>
-                    <DialogDescription>
-                        Aquí puedes parametrizar el sistema listas de datos y información del sistema
-                    </DialogDescription>
-                </DialogHeader>
-                <ConfigPage />
-            </ButtonFloat>
         </div>
     )
 }

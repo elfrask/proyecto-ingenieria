@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { MinuteTypeCard } from "./custom-fields";
 import { UserPageConfigs } from "./user-page-configs";
 import { getSession } from "@/lib/auth";
+import { OriginStringsOptions } from "./origins-string-componets";
 
 const UserSession = await getSession();
 
@@ -57,6 +58,7 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
             const [typeMinutesList, setTypeMinutesList] = useState<IMinuteType[]>([])
 
             async function loadTypes() {
+                
 
                 const result = await getAllMinuteTypes({});
 
@@ -182,7 +184,25 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
                 </div>
             )
         }
-    )
+    ),
+    LinkSectionsItemElement(
+        "Listas y datos seleccionables",
+        "Crea y gestiona tus listas y grupos de listas seleccionables",
+        ({ isOpen }) => {
+
+            return (
+                <div className="w-full p-4 space-y-2">
+                    {
+                        OriginStringsOptions.map((x, i) => {
+                            // console.log(x)
+                            return <LinkElement key={i} {...x} />
+                        })
+                    }
+                </div>
+            )
+        }
+    ),
+    
 ]
 
 

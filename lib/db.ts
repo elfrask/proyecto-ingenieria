@@ -1,6 +1,6 @@
 import mongoose, { model, connect, Schema, Model, RootFilterQuery } from "mongoose";
 import { autoIncrement, initializeCounterModel } from "./mongooseAutoincrement";
-import { IMarker, IMinute, IMinuteType, IRole, IUser } from "./db-types"
+import { IMarker, IMinute, IMinuteType, IOrigins, IOriginsElement, IRole, IUser } from "./db-types"
 if (!process.env.MONGO_URI) {
     throw new Error("MONGO_URI environment variable is not defined");
 }
@@ -75,9 +75,29 @@ const RoleSchema = new Schema<IRole>({
     }
 }, { strict: false })
 
+const OriginSchema = new Schema<IOrigins>({
+    disabled: Boolean,
+    id: Number,
+    name: String,
+    title: String
+});
+
+const OriginElementSchema = new Schema<IOriginsElement>({
+    id: Number,
+    title: String,
+    origins: String,
+    peso: Number,
+    value: String,
+    disabled: Boolean
+});
+
+
+
 // Aplica el plugin de autoincremento al campo 'id' de SimpleMinute
 autoIncrement(MinuteSchema, { field: "id", model: "Minute" });
 autoIncrement(MinuteTypeSchema, { field: "id", model: "MinuteType" });
+autoIncrement(OriginSchema as any, { field: "id", model: "Origins" });
+autoIncrement(OriginElementSchema as any, { field: "id", model: "OriginsElement" });
 
 function ExportModel<T = Document>(nameModel: string, schema: Schema): Model<T> {
 
@@ -94,3 +114,5 @@ export const Marker = ExportModel<IMarker>("Marker", MarkerSchema);
 export const Minute = ExportModel<IMinute>("Minute", MinuteSchema);
 export const MinuteType = ExportModel<IMinuteType>("MinuteType", MinuteTypeSchema);
 export const Role = ExportModel<IRole>("Role", RoleSchema);
+export const Origin = ExportModel<IOrigins>("Origin", OriginSchema);
+export const OriginElement = ExportModel<IOriginsElement>("OriginElement", OriginElementSchema);

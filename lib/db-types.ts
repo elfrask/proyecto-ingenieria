@@ -77,6 +77,22 @@ export interface PermissionInterface {
 
 }
 
+export interface IOrigins {
+  id?: number;
+  name: string;
+  title: string;
+  disabled: boolean
+}
+
+export interface IOriginsElement {
+  id?: number
+  origins: string;
+  title: string;
+  value: string;
+  peso: number;
+  disabled: boolean;
+}
+
 export const PermissionDefault: PermissionInterface = {
  GeneralConfigs: 0,
  Markers: 0,
