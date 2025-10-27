@@ -1,18 +1,19 @@
-import { Dispatch, HTMLAttributes, useState } from "react";
+import { Dispatch, HTMLAttributes, useEffect, useState } from "react";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { Button } from "./ui/button";
 import { ArrowDown, ArrowUp, Pencil, PlusCircle, Save, Trash2 } from "lucide-react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { ICustomField, IMinuteType, typesFields } from "@/lib/db-types";
-import { caption2Name } from "@/lib/utils";
+import { ICustomField, IMinuteType, IOrigins, IOriginsElement, typesFields } from "@/lib/db-types";
+import { caption2Name, cn, Notify } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent } from "./ui/tabs";
 import { InputCalendar } from "./input-calendar";
 import { updateMinuteType } from "@/lib/minute-actions";
 import { toast } from "sonner";
 import { getSession } from "@/lib/auth";
+import { getAllOriginElements, getAllOrigins } from "@/lib/origins-actions";
 const UserSession = await getSession();
 
 export interface MinuteTypeCardProps {
@@ -174,6 +175,27 @@ export function CustomFieldRender({
 }: CustomFieldRenderProps) {
 
     value = value === undefined ? defaultValue : value;
+    const [originListElements, setOriginListElements] = useState<IOriginsElement[]>([])
+
+
+    async function loadListOrigins(name: string) {
+
+        const result = await getAllOriginElements(name);
+
+        if (result.success) {
+            setOriginListElements(result.result as IOriginsElement[])
+        } else {
+            Notify.reject("Hubo un problema al cargar la lista", result.msg)
+        }
+    }
+
+    useEffect(() => {
+
+        if (field.origin) {
+            loadListOrigins(field.origin)
+        }
+
+    }, []);
 
     switch (field.type) {
         case "none":
@@ -212,8 +234,30 @@ export function CustomFieldRender({
                 onChangeValue={(x) => onChangeValue(x, field.name)}
 
             />
+        case "select":
 
-
+            // return <Select
+            //     className={className}
+            //     placeholder={field.placeholder || ""}
+            //     value={value as string}
+            //     onChange={(x) => onChangeValue(x.target.value, field.name)}
+            // />
+            return (
+                <Select value={value as string} onValueChange={x => onChangeValue(x, field.name)}>
+                    <SelectTrigger className={cn(className, "w-full")}>
+                        <SelectValue placeholder={field.placeholder} className="w-full" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            {
+                                originListElements.map(t => (
+                                    <SelectItem key={t.id} value={t.value}>{t.title}</SelectItem>
+                                ))
+                            }
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            )
 
         default:
             return <>¿{field.type}?</>
@@ -250,6 +294,7 @@ export function CustomFieldMaker(
 
 
     const [defaultValue, setDefaultValue] = useState(x.defaultValue);
+    const [origin, setOrigin] = useState(x.origin);
     const [codeName, setCodeName] = useState(x.name);
     const [caption, setCaption] = useState(x.caption);
     const [type, setType] = useState(x.type);
@@ -258,7 +303,48 @@ export function CustomFieldMaker(
     const [min, setMin] = useState(x.min);
     const [max, setMax] = useState(x.max);
 
+    const [originListElements, setOriginListElements] = useState<IOriginsElement[]>([])
+    const [originList, setOriginList] = useState<IOrigins[]>([])
 
+    async function loadOrigins() {
+
+        const result = await getAllOrigins();
+
+        if (result.success) {
+            setOriginList(result.result as IOrigins[])
+        } else {
+            Notify.reject("Hubo un problema al cargar los orígenes", result.msg)
+        }
+    }
+
+    async function loadListOrigins(name: string) {
+
+        const result = await getAllOriginElements(name);
+
+        if (result.success) {
+            setOriginListElements(result.result as IOriginsElement[])
+        } else {
+            Notify.reject("Hubo un problema al cargar la lista", result.msg)
+        }
+    }
+
+
+
+
+    useEffect(() => {
+
+        if (origin) {
+            loadListOrigins(origin)
+        }
+
+    }, [origin]);
+
+    useEffect(() => {
+        if (type === "select") {
+            loadOrigins()
+
+        }
+    }, [type]);
 
     const RangeState = parseInt(rangeValue ? (rangeValue + "") : "0")
 
@@ -432,6 +518,62 @@ export function CustomFieldMaker(
                             }} />
                         </div>
                     </TabsContent>
+                    <TabsContent value="select">
+                        <div className="
+                            flex flex-col gap-2
+                            *:flex *:flex-col *:gap-2
+                        ">
+                            <div>
+                                <Label className="mb-2">
+                                    Origen:
+                                </Label>
+                                <Select value={origin} onValueChange={(value) => {
+                                    setOrigin(value);
+
+                                    x.origin = value;
+                                }}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="elije uno" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {
+                                                originList.map(t => (
+                                                    <SelectItem key={t.id} value={t.name}>{t.title}</SelectItem>
+                                                ))
+                                            }
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label className="mb-2">
+                                    Valor por defecto:
+                                </Label>
+                                <Select value={defaultValue} onValueChange={(value) => {
+                                    setDefaultValue(value);
+
+                                    x.defaultValue = value;
+                                }}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="elije uno" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {
+                                                originListElements.map(t => (
+                                                    <SelectItem key={t.id} value={t.value}>{t.title}</SelectItem>
+                                                ))
+                                            }
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+
+                        </div>
+                    </TabsContent>
+
 
                 </Tabs>
             </div>

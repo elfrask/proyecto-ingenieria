@@ -31,7 +31,7 @@ export const typesFields = [
   { type: "text", titleName: "Texto" },
   { type: "number", titleName: "Número" },
   { type: "date", titleName: "Fecha" },
-  // { type: "select", titleName: "Selección" },
+  { type: "select", titleName: "Selección" },
   // { type: "checkbox", titleName: "Casilla de verificación" },
   // { type: "textarea", titleName: "Área de texto" },
   // { type: "map-polygon", titleName: "Polígono en mapa" },
