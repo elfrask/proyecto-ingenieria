@@ -640,7 +640,7 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
 
                         }}>
                         <Plus />
-                        Crear rol
+                        Crear Usuario
                     </Button>
                 </CardFooter>
             </Card>

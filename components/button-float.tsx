@@ -16,6 +16,7 @@ export interface ButtonFloatProps {
     dialogContent?: ReactNode;
     children?: ReactNode;
     size?: number;
+    maxWidthDialog?: number;
     ariaLabel?: string;
     className?: string;
 }
@@ -25,6 +26,8 @@ export default function ButtonFloat({
     bgColor = "#2563eb",
     position = { bottom: 30, right: 32 },
     children,
+    maxWidthDialog,
+    dialogContent,
     size = 56,
     ariaLabel = "Abrir diálogo",
     className
@@ -62,7 +65,7 @@ export default function ButtonFloat({
                     {Icon && <Icon size={size * 0.5} color="#fff" />}
                 </button>
             </DialogTrigger>
-            <DialogContent className="">
+            <DialogContent className="" style={{width: `${maxWidthDialog || 500}px`, maxWidth: `${maxWidthDialog || 500}px`}}>
                 {children}
             </DialogContent>
         </Dialog>

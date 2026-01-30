@@ -126,3 +126,99 @@ export function StateInput<T = any>(value: T, setValue: Dispatch<T>) {
 export function Class2Json<T=any>(Obj: any): T {
   return JSON.parse(JSON.stringify(Obj))
 }
+
+
+
+
+
+
+export function toWith<T>(params: T[], cb: (...pr: T[]) => any) {
+  return cb(...params);
+}
+
+
+export function selectAttributes<T extends Record<string, any>, K extends keyof T>(
+  data: T,
+  keys: K[]
+): Pick<T, K> {
+
+  const res = {} as Pick<T, K>;
+  for (const key of keys) {
+    res[key] = data[key];
+  }
+
+  return res;
+};
+
+export function logValue(value: any): any {
+  console.log(value);
+
+  return value
+}
+
+
+export function isPlainObject(value: any): boolean {
+
+  if (typeof value !== "object") {
+    return false
+  }
+
+  return Object.getPrototypeOf(value) === Object.prototype;
+};
+
+export function getFromName<T = any>(obj: Record<string, any>, path: string) {
+  const paths = path.split(".");
+  let _obj: Record<string, any> = obj;
+
+  paths.forEach(x => {
+    _obj = (_obj || {})[x]
+  });
+
+  return _obj as T | undefined
+
+};
+
+
+
+
+const recursiveClearTempsForms = (object: any) => {
+  const detect = ["data", "tempForm"].sort();
+
+  const attribs = Object.keys(object).sort();
+
+  if (attribs.toString() === detect.toString()) {
+    delete object.tempForm
+    return
+  };
+
+  Object.entries(object).forEach(x => {
+    const item = object[x[0]];
+
+    if (item === null) {
+      return
+    }
+
+    if (!isPlainObject(item)) {
+      return
+    }
+
+    recursiveClearTempsForms(item)
+  })
+
+}
+
+export const clearTemporalsForms = (all: any) => {
+
+
+  recursiveClearTempsForms(all)
+}
+
+
+export function generarCodigo<T extends {codigo?: string}>(obj: T, key?: keyof T) {
+  
+  const k = key || "codigo";
+
+  obj[k] = (obj[k] || crypto.randomUUID()) as T[keyof T] & T["codigo"]
+
+  return obj
+}

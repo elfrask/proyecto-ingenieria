@@ -1,54 +1,26 @@
 "use client"
-import { MapContainer, TileLayer, Marker, Popup, MapContainerProps, useMapEvents, useMap, MarkerProps } from "react-leaflet";
-import React, { ReactNode, useEffect, useRef, useState } from "react";
-import L, { extend, LatLngExpression } from 'leaflet'; // ¡Importa Leaflet aquí!
-import {
-    ContextMenu,
-    ContextMenuItem,
-    ContextMenuTrigger,
-    ContextMenuContent
-} from "./ui/context-menu";
-
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import { IMarker, IMinuteType, typesFields } from "@/lib/db-types";
-import { createMarker, createMinute, deleteMarker, deleteMinute, getAllMarkers, getAllMinutes, getMarker, getMinute, Minute, Marker as Mrk, updateMarker, updateMinute } from "@/lib/map-actions";
+import { MapContainer, TileLayer, Popup, useMap } from "react-leaflet";
+import React, { useEffect, useRef, useState } from "react";
+import L, { LatLngExpression } from 'leaflet'; // ¡Importa Leaflet aquí!
+import { ContextMenu, ContextMenuItem, ContextMenuTrigger, ContextMenuContent } from "./ui/context-menu";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from "@/components/ui/dialog"
+import { IMarker } from "@/lib/db-types";
+import { createMarker, getAllMarkers, Marker as Mrk } from "@/lib/map-actions";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { ArrowDown, Info, LogOut, LucideChevronDown, Pencil, PlusCircle, Route, Save, Trash2 } from "lucide-react";
-// import { useRouter } from "next/router";
+import { LogOut } from "lucide-react";
 import { getSession, logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Form } from "./ui/form";
-import z from "zod";
-import { toast } from "sonner";
-import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
-import { getAllMinuteTypes } from "@/lib/minute-actions";
-import { Textarea } from "./ui/textarea";
 import type { RootFilterQuery } from "mongoose";
-import { Calendar } from "./ui/calendar";
 import { InputCalendar } from "./input-calendar";
 import { HTML, range } from "@/lib/utils";
-// import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
-// import { Button } from "./ui/button";
-// import React, { ReactNode, useState } from "react";
 import * as LucideIcons from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import ConfigPage from "./config-page";
 import ButtonFloat from "./button-float";
-import { CustomFieldRender, CustomFieldValueType } from "./custom-fields";
 import { CustomMarker, MarkerData } from "./marker-components";
+import Estadisticas from "./estadisticas/estadisticas";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
@@ -74,7 +46,7 @@ export interface SearchParametersProps {
     dueFilterTime: Date;
     title: string;
     description: string;
-    
+
 }
 
 interface propsDialogSearchParameters extends HTML {
@@ -82,8 +54,8 @@ interface propsDialogSearchParameters extends HTML {
 
 }
 
-export function DialogSearchParameters({onSearch}: propsDialogSearchParameters) {
-    
+export function DialogSearchParameters({ onSearch }: propsDialogSearchParameters) {
+
 }
 
 
@@ -567,11 +539,11 @@ export function MainPage() {
                                 <Input value={searchForTitle} onChange={x => setSearchForTitle(x.target.value)} />
                             </div>
                             <DialogFooter>
-                                <Button onClick={async x=> {
+                                <Button onClick={async x => {
                                     // setPeriodByMonthAndYear();
                                     await loadData()
                                     setSearchDialogOpen(false)
-                                    
+
                                 }}>
                                     <LucideIcons.Search />
                                     Buscar
@@ -584,7 +556,7 @@ export function MainPage() {
                 min-h-16 h-auto w-full lg:max-w-[480px] border flex flex-row 
                 flex-wrap p-2 items-center lg:justify-end
                 ">
-                    <Button onClick={async () =>  {
+                    <Button onClick={async () => {
 
                         await logout();
 
@@ -611,7 +583,7 @@ export function MainPage() {
                 <ConfigPage />
             </ButtonFloat>
 
-            <ButtonFloat icon="Activity" className="" position={{ bottom: 100, right: 32 }} size={50} bgColor="#000">
+            <ButtonFloat icon="Activity" className="" position={{ bottom: 100, right: 32 }} size={50} bgColor="#000" maxWidthDialog={1000}>
                 <DialogHeader>
                     <DialogTitle>
                         Generador de estadísticas
@@ -620,7 +592,7 @@ export function MainPage() {
                         Panel de generar las estadísticas y reportes del sistema
                     </DialogDescription>
                 </DialogHeader>
-                <ConfigPage />
+                <Estadisticas />
             </ButtonFloat>
         </div>
     )
