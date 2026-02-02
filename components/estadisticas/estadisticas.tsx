@@ -3,6 +3,7 @@ import { Separator } from "../ui/separator";
 import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import TimeLine from "./timeline";
+import { useSearch } from "@/hooks/estadisticas/use-search";
 
 
 
@@ -11,6 +12,9 @@ interface EstadisticasProps {
 }
 
 const Estadisticas: FunctionComponent<EstadisticasProps> = () => {
+
+  
+
   return (
     <div>
       <Separator />

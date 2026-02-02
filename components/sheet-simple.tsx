@@ -12,7 +12,9 @@ export interface SheetSimpleProps extends HTML {
     title: string,
     description?: string
 }
- 
+/**
+ * @deprecated Deprecado, usar el nuevo SimpleSheet
+ */
 const SheetSimple: FunctionComponent<SheetSimpleProps> = ({
     asChild,
     children,

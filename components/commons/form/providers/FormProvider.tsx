@@ -3,7 +3,7 @@ import { usePreserve } from "@/hooks/usePreserve"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createContext, ReactNode, useContext, useState } from "react"
 import { FormProvider, useForm, UseFormReturn, Resolver } from "react-hook-form"
-import z, { ZodType } from "zod"
+import z, { ZodObject, ZodType } from "zod"
 
 export type BindFunction = (name: string, methods: UseFormReturn) => void
 
@@ -45,7 +45,7 @@ type FormComponentProps<T extends ZodType<any, any>> = {
 }
 
 
-export default function FormComponent<T extends ZodType<any, any>>({ 
+export default function FormComponent<T extends z.ZodObject<any, any>>({ 
   children,
   schema,
   onSubmit,

@@ -1,7 +1,7 @@
 "use client";
 import { optionalSchema } from "@/lib/makeNameHelper";
 import { getFromName, logValue } from "@/lib/utils";
-import z, { boolean, file, object } from "zod";
+import z from "zod";
 import { Items } from "./form.types";
 
 
@@ -150,12 +150,18 @@ export function getSchemaFromName<T extends z.ZodObject>(schema:T, path:string):
 export function generateEnumFromItems<T extends Items>(items: readonly T[], message?: string, _optional?: boolean) {
   const out = [...items.map(x => x.value), ""] as ("" | T["value"])[]
 
-  return z.enum(out, { error: message || "Valor invalido" }).refine(x => {
+  const e = z.enum(out, { error: message || "Valor invalido" }).refine(x => {
     if (_optional) {
       return true
     }
     return x !== "" 
-  }, "Este campo es obligatorio")
+  }, "Este campo es obligatorio");
+
+  if (_optional) {
+    return optionalSchema(e)
+  }
+
+  return e
 }
 
 export function useSuperRefineTools<T extends z.ZodObject, U extends Record<string, any> = z.infer<T>>(mainSchema: T, values: U, ctx: z.core.$RefinementCtx<U>) {
