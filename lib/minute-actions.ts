@@ -1,19 +1,14 @@
 "use server";
 import { RootFilterQuery } from "mongoose";
 import { MinuteType } from "./db";
-import { IMinuteType } from "./db-types";
+import { IMinute, IMinuteType } from "./db-types";
+import { ResponseRequest } from "./utils";
 
 // Utilidad para limpiar objetos de Mongoose y dejar solo datos planos serializables
 function clean<T>(doc: any): T {
     return doc ? JSON.parse(JSON.stringify(doc)) : doc;
 }
 
-export interface ResponseRequest<T> {
-    msg: string,
-    error: number,
-    success: boolean,
-    result: T | null,
-}
 
 function Response<T>(success: boolean, result: T | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
     return {
@@ -35,6 +30,7 @@ export async function getAllMinuteTypes(
         return Response(false, [], 1, err.message || "Error al obtener tipos de minutas");
     }
 }
+
 
 // Crear un nuevo tipo de minuta
 export async function createMinuteType(data: Omit<IMinuteType, "id">): Promise<ResponseRequest<IMinuteType|null>> {

@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { ChangeEvent, Dispatch, HtmlHTMLAttributes } from "react";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge"
+import {AxiosResponse} from "axios"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -221,4 +222,20 @@ export function generarCodigo<T extends {codigo?: string}>(obj: T, key?: keyof T
   obj[k] = (obj[k] || crypto.randomUUID()) as T[keyof T] & T["codigo"]
 
   return obj
+}
+
+
+export type AxiosResponseServer<T> = AxiosResponse<IDataResultServer<T>>
+
+
+export interface IMeta {
+	current_page: number;
+	per_page: number;
+	total: number;
+}
+
+export interface IDataResultServer<T> {
+  data: T
+  message: string;
+  meta: IMeta
 }

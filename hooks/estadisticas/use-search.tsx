@@ -65,7 +65,6 @@ const PreSchema = z.object({
 
 const Schema = PreSchema.superRefine((values, ctx) => {
   const { revalidate } = useSuperRefineTools(PreSchema, values, ctx);
-
   const { modo } = values;
 
   if (modo === "fecha") {
@@ -78,7 +77,6 @@ const Schema = PreSchema.superRefine((values, ctx) => {
   if (modo === "periodo") {
     revalidate(helper.inicio.$(), requires.date());
     revalidate(helper.final.$(), requires.date());
-
   };
   if (modo === "año") {
     revalidate(helper.año.$(), requires.number());
@@ -90,6 +88,7 @@ const Schema = PreSchema.superRefine((values, ctx) => {
 type InterfazSearch = z.infer<typeof Schema>;
 const helper = makeNameHelper(Schema);
 export type dataResultSearch = {
+  modo: InterfazSearch["modo"],
   init: Date, 
   end: Date
 };
@@ -109,9 +108,9 @@ export function useSearch({
 }: options) {
   const { onSearch } = p
   const instance = useInstanceID();
-  const search = useStateObject<SearchObject>({
-
-  })
+  const search = useStateObject<dataResultSearch>({
+    modo: ""
+  } as dataResultSearch)
 
   
 
@@ -155,12 +154,17 @@ interface FormSearchProps extends options {
 }
 
 function FormSearch({
-  onSearch, open, search
+  onSearch: _oS, open, search
 }: FormSearchProps) {
   const { methods } = useFormContextComponent()
   const data = methods.getValues() as InterfazSearch;
   const update = useUpdate();
   const modo = data.modo
+
+  const onSearch: handlerOnSearch = (data) => {
+    search.set(data)
+    _oS?.(data)
+  }
 
   return (
     <SimpleDialog
@@ -179,11 +183,14 @@ function FormSearch({
           
           const modo = data.modo;
           if (modo === "todo") {
-            onSearch?.({} as dataResultSearch)
+            onSearch?.({
+              modo,
+            } as dataResultSearch)
           };
           
           if (modo === "año") {
             onSearch?.({
+              modo,
               init: new Date(data.año as number, 0, 1),
               end: new Date((data.año as number) + 1, 0, 1)
             })
@@ -192,6 +199,7 @@ function FormSearch({
           if (modo === "mes") {
             const mes = parseInt(data.mes)
             onSearch?.({
+              modo,
               init: new Date(data.año as number, mes, 1),
               end: new Date((data.año as number), mes + 1, 1)
             })
@@ -200,6 +208,7 @@ function FormSearch({
           if (modo === "fecha") {
             const fecha = data.fecha as Date
             onSearch?.({
+              modo,
               init: fecha,
               end: new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + 1)
             })
@@ -208,6 +217,7 @@ function FormSearch({
           if (modo === "periodo") {
             const {inicio, final} = data 
             onSearch?.({
+              modo,
               init: inicio as Date,
               end: final as Date
             })

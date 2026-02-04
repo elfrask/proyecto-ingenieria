@@ -2,6 +2,7 @@
 import { Marker as MarkerModel, Minute as MinuteModel } from "@/lib/db";
 import * as DbTypes from "@/lib/db-types";
 import { RootFilterQuery } from "mongoose";
+import { ResponseRequest } from "./utils";
 
 // Interfaces exportadas para tipado externo
 export interface Marker extends DbTypes.IMarker {}
@@ -9,12 +10,6 @@ export interface Minute extends DbTypes.IMinute {}
 
 // ----------- Formato de respuesta -----------
 
-export interface ResponseRequest<T> {
-    msg: string,
-    error: number,
-    success: boolean,
-    result: T | null,
-}
 
 function Response<T>(success: boolean, result: T | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
     return {
@@ -157,3 +152,16 @@ export async function getAllMinutes(
     }
 }
 
+
+// // Obtener todas las minutas de una lista de Markers
+// export async function getAllMinutesFromMarkers(
+//     filter: string[]
+//     // filter: RootFilterQuery<IMinuteType> = {}
+// ): Promise<ResponseRequest<IMinute[]>> {
+//     try {
+//         const types = await Minute.find(filter);
+//         return Response(true, types.map<IMinuteType>(clean), 0, "Tipos de minutas obtenidos correctamente");
+//     } catch (err: any) {
+//         return Response(false, [], 1, err.message || "Error al obtener tipos de minutas");
+//     }
+// }

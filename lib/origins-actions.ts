@@ -1,24 +1,8 @@
 "use server"
 import { Origin, OriginElement } from "./db";
 import { IOrigins, IOriginsElement } from "./db-types";
-import { Class2Json_ServerImplementation, toJson } from "./utils-server";
+import { Response, ResponseRequest } from "./utils";
 
-// Formato de respuesta
-export interface ResponseRequest<T> {
-    msg: string,
-    error: number,
-    success: boolean,
-    result: T | null,
-}
-
-function Response<T>(success: boolean, result: T | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
-    return {
-        success,
-        result: toJson(result),
-        error,
-        msg
-    };
-}
 
 // Crear un nuevo origen
 export async function createOrigin(data: IOrigins): Promise<ResponseRequest<any>> {
