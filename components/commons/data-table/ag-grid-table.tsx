@@ -10,6 +10,8 @@ import CustomHeader from './custom-header'
 
 ModuleRegistry.registerModules([LocaleModule, AllCommunityModule])
 
+export const AgGridReactTable = AgGridReact;
+
 type AGTableComponentProps = {
   rowData: any[],
   colDef: ColDef<any, any>[],
@@ -78,7 +80,7 @@ const myDarkTheme = myTheme
     borderColor: "var(--border)",
   });
 
-  
+export const TableThemeWhite = myTheme;
   
 export default function AGTableComponent({ rowData, colDef, context, defaultPaginationSize, currentPage, onPageChange, totalElements, maxPages, whiteMode, ...props }: AGTableComponentProps) {
   // por integracion de paginacion con:

@@ -11,6 +11,7 @@ import { ChartAreaKpi } from "@/components/commons/kapis-elements/area-chart";
 import { ColumTable, TableComponent } from "@/components/commons/table/table";
 import { renderTableDate } from "@/components/commons/table/renders/render-date";
 import { ChartConfig } from "@/components/ui/chart";
+import StaticReportTable from "@/components/commons/table/static-table";
 
 const columnResumen: ColumTable<IMarker>[] = [
   { key: "subject", label: "Titulo" },
@@ -55,14 +56,16 @@ const ResumenReport: FunctionComponent<paramsPeriodo> = async ({ searchParams })
         <CardKpis
           icon={MapPin}
           titulo="Puntos de riesgos"
-          bgColor="bg-orange-600"
+          bgColor="bg-white-600"
+          forPrint
           contenido={Markers.result?.length || 0}
           border
         />
         <CardKpis
           icon={FileTextIcon}
           titulo="Minutas registradas"
-          bgColor="bg-sky-600"
+          bgColor="bg-white-600"
+          forPrint
           contenido={Minutes.result?.length || 0}
           border
         />
@@ -82,13 +85,13 @@ const ResumenReport: FunctionComponent<paramsPeriodo> = async ({ searchParams })
           />
         </div>
 
-      {/* <div className="w-full">
-        <TableComponent
+      <div className="w-full">
+        <StaticReportTable
           columns={columnResumen}
           data={Markers?.result || []}
 
         />
-      </div> */}
+      </div>
       <PrintComponent delay={2000} />
     </div>
   );

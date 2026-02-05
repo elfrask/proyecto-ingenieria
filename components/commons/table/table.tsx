@@ -52,7 +52,7 @@ interface MasterDetail {
 export type MapFunction<T, CTX, Return=void> = (row: T, index: number, ctx: CTX) => Return
 // export type MapFunction<T, CTX> = (row: T, index: number, ctx: CTX) => void
 
-interface TableComponentProps<T = any, CTX = any> {
+export interface TableComponentProps<T = any, CTX = any> {
   data: T[];
   columns: ColumTable[];
   columnsVersion?: string | number;
