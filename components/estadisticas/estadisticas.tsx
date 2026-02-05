@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import { Separator } from "../ui/separator";
 import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import Resumen from "./timeline";
+import Resumen from "./resumen";
 
 
 
@@ -17,13 +17,17 @@ const Estadisticas: FunctionComponent<EstadisticasProps> = () => {
   return (
     <div>
       <Separator />
-      <Tabs defaultValue="timeline">
+      <Tabs defaultValue="resumen">
         <TabsList className="w-full">
+          <TabsTrigger value="resumen" children="Resumen general" />
+          <TabsTrigger value="historico" children="Histórico de actividad" />
           <TabsTrigger value="timeline" children="Resumen general" />
+          <TabsTrigger value="avanzado" children="Estadísticas Avanzadas" />
         </TabsList>
-        <Card className="w-full">
-          <CardContent>
-            <TabsContent value="timeline">
+        
+        <Card className="w-full max-h-[80vh]">
+          <CardContent className="overflow-y-auto">
+            <TabsContent value="resumen">
               <Resumen/>
             </TabsContent>
           </CardContent>

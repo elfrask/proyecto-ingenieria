@@ -3,6 +3,8 @@ import { ChangeEvent, Dispatch, HtmlHTMLAttributes } from "react";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge"
 import {AxiosResponse} from "axios"
+import { Decode, Encode } from "./local-storage/super-json";
+import { format } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -125,7 +127,8 @@ export function StateInput<T = any>(value: T, setValue: Dispatch<T>) {
 
 
 export function Class2Json<T=any>(Obj: any): T {
-  return JSON.parse(JSON.stringify(Obj))
+  return Decode(Encode(Obj))
+  // return JSON.parse(JSON.stringify(Obj))
 }
 
 
@@ -238,4 +241,8 @@ export interface IDataResultServer<T> {
   data: T
   message: string;
   meta: IMeta
+}
+
+export function formatDate(date: Date | string | number): string {
+  return format(new Date(date), "dd/MM/yyyy")
 }

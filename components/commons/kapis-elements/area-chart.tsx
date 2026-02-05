@@ -1,11 +1,14 @@
+"use client"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import BoxChart from "./box-chart";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { LucideIcon } from "lucide-react";
+import * as Lucide from "lucide-react";
+import { icon } from "leaflet";
+import { IconKey, parseLucide } from "@/lib/lucide";
 
 interface AreaProps {
   title: string;
-  icon: LucideIcon;
+  icon: IconKey;
   config: ChartConfig;
   data: any[];
   categories: string[]; // Las llaves que se van a graficar (ej: ['uniformes', 'epps'])
@@ -23,7 +26,7 @@ export function ChartAreaKpi({
   ...p
 }: AreaProps) {
   return (
-    <BoxChart {...p}>
+    <BoxChart {...p} icon={parseLucide(p.icon)}>
       <ChartContainer config={config} className="min-h-[250px] w-full pt-4">
         <AreaChart
           data={data}

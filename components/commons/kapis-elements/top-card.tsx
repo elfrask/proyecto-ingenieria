@@ -1,4 +1,6 @@
+// "use-client"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { IconKey, parseLucide } from '@/lib/lucide'
 import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
 import React from 'react'
@@ -8,7 +10,7 @@ type CardKapisProps = {
   titulo: string
   contenido: string | number,
   border?: boolean,
-  icon: LucideIcon
+  icon: IconKey
   bgColor?: string;
   className?: string;
 }
@@ -22,7 +24,7 @@ function CardKpis({
   bgColor = 'bg-primary',
   className
 }: CardKapisProps) {
-  const Icon = icon
+  const Icon = parseLucide(icon)
 
   return (
     <Card className={cn('border-0 shadow-sm h-35 px-6 grid grid-cols-3', className, border && "border")}>
