@@ -103,33 +103,6 @@ const Resumen: FunctionComponent = () => {
     })
   }, [Markers.data])
 
-  //Ejemplo
-
-  //   const dataAdopcionHistorica = [
-  //   { mes: "Julio", salud: 400, prestamos: 50, vales: 800 },
-  //   { mes: "Agosto", salud: 420, prestamos: 55, vales: 810 },
-  //   { mes: "Septiembre", salud: 450, prestamos: 70, vales: 850 },
-  //   { mes: "Octubre", salud: 480, prestamos: 85, vales: 900 },
-  //   { mes: "Noviembre", salud: 510, prestamos: 92, vales: 920 },
-  //   { mes: "Diciembre", salud: 550, prestamos: 110, vales: 980 },
-  // ];
-
-  // const configAdopcion = {
-  //   salud: { label: "Seguros de Salud", color: "var(--color-red-600)" },
-  //   prestamos: { label: "Uso de Préstamos", color: "var(--color-blue-600)" },
-  //   vales: { label: "Vales de Alimentación", color: "var(--color-green-600)" },
-  // } satisfies ChartConfig;
-
-  // <ChartAreaKpi
-  //   title="Crecimiento de Adopción por Beneficio"
-  //   icon={Users}
-  //   config={configAdopcion}
-  //   data={dataAdopcionHistorica}
-  //   indexKey="mes"
-  //   categories={["salud", "prestamos", "vales"]}
-  // />
-
-  // console.log(Estadistica)
 
 
   return (
@@ -141,7 +114,7 @@ const Resumen: FunctionComponent = () => {
           <RenderSearchDate data={search} placeholder="Seleccionar Periodo" />
         </Button>
 
-        <Button onClick={x => openAndPrint(`/reportes/resumen?${searchConvertToParams(search)}`)}>
+        <Button onClick={x => openAndPrint(`/reportes/resumen?${searchConvertToParams(search)}`)} disabled={search.modo === ""}>
           <LucidePrinter />
           Imprimir reporte
         </Button>

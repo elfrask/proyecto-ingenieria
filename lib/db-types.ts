@@ -38,7 +38,9 @@ export const typesFields = [
   { type: "none", titleName: "Ninguno" }
 ] as const;
 
-export interface ICustomField { // esto no es una tabla, es una subInterfaz
+
+
+export interface ICustomFieldPre { // esto no es una tabla, es una subInterfaz
   name: string;           // Nombre interno del campo (clave)
   type: (typeof typesFields)[number]["type"]; // Tipo de campo basado en typesFields
   caption: string;        // Etiqueta o título visible para el usuario
@@ -53,6 +55,9 @@ export interface ICustomField { // esto no es una tabla, es una subInterfaz
   min?: number;           // Para number/date: mínimo
   max?: number;           // Para number/date: máximo
   step?: number;          // Para number: incremento
+}
+
+export interface ICustomField extends ICustomFieldPre {
   [key: string]: any;     // Permite extensibilidad para otros props personalizados
 }
 

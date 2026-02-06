@@ -72,10 +72,10 @@ export interface ResponseRequest<T> {
     result: T | null,
 }
 
-export function Response<T>(success: boolean, result: T | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
+export function Response<T>(success: boolean, result: NoInfer<T> | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
     return {
         success,
-        result,
+        result: (result),
         error,
         msg
     }

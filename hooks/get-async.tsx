@@ -7,7 +7,7 @@ export interface useServerQueryOptions<T, CTX> {
   onSuccess?(data: T, msg: string): void;
   defaultContext?: CTX;
   default?: NoInfer<T>;
-  autoLoad?: boolean;
+  autoLoadDisable?: boolean;
   
 }
 
@@ -18,7 +18,7 @@ export function useServerQuery<T, CTX extends Record<string, any>>(
   
   const [data, setData] = useState<T | undefined>(options?.default as T);
   const [loading, setLoading] = useState(false);
-  const [firstLoad, setFirstLoad] = useState(options?.autoLoad);
+  const [firstLoad, setFirstLoad] = useState(options?.autoLoadDisable);
   const {set: setContext, state: context} = useStateObject<CTX>((options?.defaultContext || {}) as unknown as CTX)
 
   async function load() {
@@ -60,14 +60,15 @@ export function useServerQuery<T, CTX extends Record<string, any>>(
     }
   }, [context])
 
-  function reload(v: Partial<CTX>) {
+  function reload(v?: Partial<CTX>) {
     
-    return setContext(v)
+    return setContext(v || {})
   }
 
   return {
     data,
     context,
+    loading,
     reload,
     refresh: () => setContext({})
   }

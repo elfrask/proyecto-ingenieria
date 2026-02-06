@@ -158,7 +158,7 @@ export const COLORS = {
   "bg-main": "-neutral-50",
 } as const;
 
-
+export const ListColors = Object.entries(COLORS).map(x => x[1])
 
 export type Colors = keyof typeof COLORS
 type PrefixColor = "text" | "border" | "bg" 

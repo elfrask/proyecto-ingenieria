@@ -1,3 +1,4 @@
+import { _Meses } from "@/hooks/estadisticas/generate-data-estadisc-from-search";
 import { dataResultSearch } from "@/hooks/estadisticas/use-search";
 import { format } from "date-fns";
 import { FunctionComponent } from "react";
@@ -18,6 +19,18 @@ const RenderSearchDate: FunctionComponent<RenderSearchDateProps> = ({
 
   if (data.modo === "todo") {
     return "Todo"
+  }
+
+  if (data.modo === "año") {
+    return `todo ${format(data.init, "yyyy")}`
+  }
+  
+  if (data.modo === "mes") {
+    return `${_Meses[format(data.init, "M")]} del ${format(data.init, "yyyy")}`
+  }
+  
+  if (data.modo === "fecha") {
+    return `${format(data.init, "dd/MM/yyyy")}`
   }
 
   return ( `${format(data.init, "dd/MM/yyyy")} - ${format(data.end, "dd/MM/yyyy")}` );

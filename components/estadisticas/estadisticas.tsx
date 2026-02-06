@@ -3,6 +3,7 @@ import { Separator } from "../ui/separator";
 import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import Resumen from "./resumen";
+import EstadisticasAvanzados from "./advance";
 
 
 
@@ -20,8 +21,8 @@ const Estadisticas: FunctionComponent<EstadisticasProps> = () => {
       <Tabs defaultValue="resumen">
         <TabsList className="w-full">
           <TabsTrigger value="resumen" children="Resumen general" />
-          <TabsTrigger value="historico" children="Histórico de actividad" />
-          <TabsTrigger value="timeline" children="Resumen general" />
+          {/* <TabsTrigger value="historico" children="Histórico de actividad" />
+          <TabsTrigger value="timeline" children="Resumen general" /> */}
           <TabsTrigger value="avanzado" children="Estadísticas Avanzadas" />
         </TabsList>
         
@@ -29,6 +30,9 @@ const Estadisticas: FunctionComponent<EstadisticasProps> = () => {
           <CardContent className="overflow-y-auto">
             <TabsContent value="resumen">
               <Resumen/>
+            </TabsContent>
+            <TabsContent value="avanzado">
+              <EstadisticasAvanzados />
             </TabsContent>
           </CardContent>
         </Card>

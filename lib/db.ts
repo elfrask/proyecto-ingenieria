@@ -24,7 +24,10 @@ const UserSchema = new Schema({
 const MinuteTypeSchema = new Schema({
     id: Number,
     caption: String,
-    typeName: String,
+    typeName: {
+        type: String,
+        unique: true,
+    },
     fields: Array
 });
 

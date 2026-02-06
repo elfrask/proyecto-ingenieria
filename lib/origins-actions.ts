@@ -74,9 +74,9 @@ export async function createOriginElement(data: IOriginsElement): Promise<Respon
 }
 
 // Leer todos los elementos de origen
-export async function getAllOriginElements(originName: string): Promise<ResponseRequest<any[]>> {
+export async function getAllOriginElements(originName: string): Promise<ResponseRequest<IOriginsElement[]>> {
     try {
-        const elements = await OriginElement.find({origins: originName});
+        const elements = await OriginElement.find({origins: originName}) as IOriginsElement[];
         return Response(true, elements, 0, "Elementos de origen obtenidos correctamente");
     } catch (err: any) {
         return Response(false, [], 1, err.message || "Error al obtener elementos de origen");

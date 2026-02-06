@@ -133,14 +133,14 @@ export function FormSelectNew({
 
       if (useNative) {
         return (
-          <NativeSelectOption key={option.value + "-native" + id} disabled={option.disabled} value={option.value} className="focus:bg-muted">
+          <NativeSelectOption key={option.value + "-native" + id} disabled={option.disabled} value={`${option.value}`} className="focus:bg-muted">
             {option.label}
           </NativeSelectOption>
         )
       }
 
       return (
-        <SelectItem key={option.value + "-component" + id} disabled={option.disabled} value={option.value} className="focus:bg-muted">
+        <SelectItem key={option.value + "-component" + id} disabled={option.disabled} value={`${option.value}`} className="focus:bg-muted">
           {option.label}
         </SelectItem>
       )
