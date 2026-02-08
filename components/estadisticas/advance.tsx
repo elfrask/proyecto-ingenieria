@@ -50,6 +50,8 @@ const EstadisticasAvanzados: FunctionComponent<EstadisticasAvanzadosProps> = () 
   );
 
   const { MinuteTypesItems } = useMemo(() => {
+
+
     return {
       MinuteTypesItems: toItems(MinuteTypes.data || [], { value: "typeName", label: "caption" })
       // MinuteSelected: 
@@ -60,9 +62,14 @@ const EstadisticasAvanzados: FunctionComponent<EstadisticasAvanzadosProps> = () 
   const { MinuteTypeSelected, fieldsItems } = useMemo(() => {
 
     const MinuteTypeSelected = MinuteTypes.data?.find(x => (x.typeName) === searchConfigs.tipo)
+
+    const fields = (MinuteTypeSelected?.fields || []) as ICustomFieldPre[];
+
+    const admitidos: ICustomField["type"][] = ["number", "select"];
+
     return {
       MinuteTypeSelected,
-      fieldsItems: toItems((MinuteTypeSelected?.fields || []) as ICustomFieldPre[], { value: "name", label: "caption" })
+      fieldsItems: toItems(fields.filter(x => admitidos.includes(x.type)), { value: "name", label: (v) => `${v.caption} (${v.type})` })
 
     }
   }, [searchConfigs.tipo])

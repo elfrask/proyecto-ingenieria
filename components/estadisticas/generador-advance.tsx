@@ -47,12 +47,12 @@ const Generador: FunctionComponent<GeneradorProps> = ({
   tipo,
 }) => {
 
-  
+
 
   const req = useServerQuery<EstadisticaResultado, any>(
     (ctx) => {
 
-      const def: EstadisticaResultado = {markers: [], minutes: [], } as unknown as EstadisticaResultado
+      const def: EstadisticaResultado = { markers: [], minutes: [], } as unknown as EstadisticaResultado
 
       if (!field) return def
       if (!mode) return def
@@ -94,10 +94,10 @@ const Generador: FunctionComponent<GeneradorProps> = ({
 
 
     let gen = Object.entries(_grupos)
-    
+
     if (search.modo === "mes") {
       gen = gen.sort()
-      
+
     }
 
     let distribucion = {
@@ -114,7 +114,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
 
       let ss: Record<string, number> = {};
       req.data.origins.forEach((x, y) => {
-        const color =`var(--color${ListColors[y] || "-black"})`
+        const color = `var(--color${ListColors[y] || "-black"})`
 
         distribucion.config[x.value] = {
           label: x.title,
@@ -130,7 +130,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
       })
       // console.log(ss)
       Object.entries(ss).forEach((x, y) => {
-        const color =`var(--color${ListColors[y] || "-black"})`;
+        const color = `var(--color${ListColors[y] || "-black"})`;
 
         distribucion.data.push({
           fill: color,
@@ -177,7 +177,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
       {
         // Selected
         req.data?.campo?.type === "select" &&
-        <ChartPieKpi 
+        <ChartPieKpi
           config={select.distribucion.config}
           data={select.distribucion.data}
           datakey="cantidad"
@@ -186,8 +186,9 @@ const Generador: FunctionComponent<GeneradorProps> = ({
           keyLabel="label"
         />
       }
-      <div>
 
+      <div>
+        
       </div>
     </div>
   );

@@ -12,6 +12,9 @@ import { ColumTable, TableComponent } from "@/components/commons/table/table";
 import { renderTableDate } from "@/components/commons/table/renders/render-date";
 import { ChartConfig } from "@/components/ui/chart";
 import StaticReportTable from "@/components/commons/table/static-table";
+import { generateGroup, nameForGroupFromSearch } from "@/hooks/estadisticas/generate-data-estadisc-from-search";
+import { format } from "date-fns";
+import RenderSearchDate from "@/components/commons/render-search-date";
 
 const columnResumen: ColumTable<IMarker>[] = [
   { key: "subject", label: "Titulo" },
@@ -28,7 +31,9 @@ const ResumenReport: FunctionComponent<paramsPeriodo> = async ({ searchParams })
 
   const d = await searchParams;
 
-  // console.log(d.init)
+  // console.log(d)
+  d.init = new Date(d.init);
+  d.end = new Date(d.end);
 
   const Markers = await getAllMarkers(d.modo === "todo" ? {} : {
     report_date: convertDateToRequest(d.init, d.end)
@@ -39,19 +44,38 @@ const ResumenReport: FunctionComponent<paramsPeriodo> = async ({ searchParams })
   });
 
   const { Estadistica } = toWith([], () => {
-  
-      const Historico = Object.groupBy((Markers?.result || []) as IMarker[], (k, i) => formatDate(k.report_date))
-  
-      return ({
-        Estadistica: Object.entries(Historico).map(x => ({
-          fecha: x[0],
-          cantidad: x[1]?.length
-        }))
-      })
+
+    const Historico = Object.groupBy((Markers?.result || []) as IMarker[], (k, i) =>
+      // format(k.report_date, "dd/MM/yyyy")
+      nameForGroupFromSearch(k, d.modo, "report_date").value
+    )
+
+    const PreEstadistica = {
+      ...generateGroup(d),
+      ...Historico
+    }
+    console.log("llego", PreEstadistica)
+
+    let preE = Object.entries(PreEstadistica);
+
+    if (d.modo === "mes") {
+      preE = preE.sort()
+    }
+
+    return ({
+      Estadistica: preE.map(x => ({
+        fecha: x[0],
+        cantidad: x[1]?.length
+      }))
     })
+  })
 
   return (
     <div className="w-full flex flex-col gap-4">
+      <div className="px-4">
+        {"Periodo de tiempo comprendido en: "}
+        <RenderSearchDate data={d} placeholder="Periodo no seleccionado" />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <CardKpis
           icon={MapPin}
@@ -72,18 +96,18 @@ const ResumenReport: FunctionComponent<paramsPeriodo> = async ({ searchParams })
       </div>
 
 
-        <div className="w-full">
+      <div className="w-full">
 
-          <ChartAreaKpi
-            title="Actividad de reportes con el tiempo"
-            data={Estadistica}
-            indexKey="fecha"
-            config={configEstadistica}
-            categories={["cantidad"]}
-            icon={"MapPin"}
+        <ChartAreaKpi
+          title="Actividad de reportes con el tiempo"
+          data={Estadistica}
+          indexKey="fecha"
+          config={configEstadistica}
+          categories={["cantidad"]}
+          icon={"MapPin"}
 
-          />
-        </div>
+        />
+      </div>
 
       <div className="w-full">
         <StaticReportTable

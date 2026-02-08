@@ -14,6 +14,7 @@ import { renderTableDate } from "../commons/table/renders/render-date";
 import { ChartAreaKpi } from "../commons/kapis-elements/area-chart";
 import { formatDate } from "@/lib/utils";
 import { ChartConfig } from "../ui/chart";
+import { generateGroup, nameForGroupFromSearch } from "@/hooks/estadisticas/generate-data-estadisc-from-search";
 
 
 const columnResumen: ColumTable<IMarker>[] = [
@@ -93,10 +94,23 @@ const Resumen: FunctionComponent = () => {
 
   const { Estadistica } = useMemo(() => {
 
-    const Historico = Object.groupBy((Markers?.data || []) as IMarker[], (k, i) => formatDate(k.report_date))
+    const Historico = Object.groupBy((Markers?.data || []) as IMarker[], (k, i) => nameForGroupFromSearch(k, search.modo, "report_date").value)
+
+
+    const PreEstadistica = {
+      ...generateGroup(search),
+      ...Historico
+    }
+    console.log("llego", PreEstadistica)
+
+    let preE = Object.entries(PreEstadistica);
+
+    if (search.modo === "mes") {
+      preE = preE.sort()
+    }
 
     return ({
-      Estadistica: Object.entries(Historico).map(x => ({
+      Estadistica: preE.map(x => ({
         fecha: x[0],
         cantidad: x[1]?.length
       }))
