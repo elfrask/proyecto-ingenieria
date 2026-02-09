@@ -17,7 +17,7 @@ const PrintComponent: FunctionComponent<PrintComponentProps> = ({
   }, [])
   
   return ( 
-    <div className="z-50 fixed left-0 top-0 w-screen h-screen cursor-crosshair">
+    <div className="z-50 fixed left-0 top-0 w-screen h-screen cursor-none">
 
     </div>
    );

@@ -15,6 +15,7 @@ import StaticReportTable from "@/components/commons/table/static-table";
 import { generateGroup, nameForGroupFromSearch } from "@/hooks/estadisticas/generate-data-estadisc-from-search";
 import { format } from "date-fns";
 import RenderSearchDate from "@/components/commons/render-search-date";
+import HeadReport from "../head-report";
 
 const columnResumen: ColumTable<IMarker>[] = [
   { key: "subject", label: "Titulo" },
@@ -72,6 +73,7 @@ const ResumenReport: FunctionComponent<paramsPeriodo> = async ({ searchParams })
 
   return (
     <div className="w-full flex flex-col gap-4">
+      <HeadReport />
       <div className="px-4">
         {"Periodo de tiempo comprendido en: "}
         <RenderSearchDate data={d} placeholder="Periodo no seleccionado" />

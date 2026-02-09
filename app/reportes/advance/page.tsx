@@ -2,6 +2,7 @@ import RenderSearchDate from "@/components/commons/render-search-date";
 import Generador from "@/components/estadisticas/generador-advance";
 import { dataResultSearch } from "@/hooks/estadisticas/use-search";
 import { FunctionComponent } from "react";
+import HeadReport from "../head-report";
 
 interface Params extends dataResultSearch {
   modeProcess: string
@@ -30,6 +31,7 @@ const Advance: FunctionComponent<AdvanceProps> =async ({
   
   return (
     <div className="w-full">
+      <HeadReport />
       <div className="px-4">
         {"Periodo de tiempo comprendido en: "}
         <RenderSearchDate data={search} placeholder="Periodo no seleccionado" />
