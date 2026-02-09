@@ -18,6 +18,7 @@ import { renderTableDate } from "../commons/table/renders/render-date";
 import { Separator } from "../ui/separator";
 import StaticReportTable from "../commons/table/static-table";
 import { refineColumn } from "../commons/table/lib";
+import PrintComponent from "@/app/reportes/print";
 
 
 interface GeneradorProps {
@@ -628,6 +629,26 @@ const Generador: FunctionComponent<GeneradorProps> = ({
               </Card>
             </Tabs>
           </>
+        }
+
+        {
+          forPrint &&
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-4 w-full px-4">
+              <TopCard title="Resumen de Datos de los campos" variant="title" />
+              <TablasEspeciales fp/>
+            </div>
+          
+            <Separator />
+            <div className="flex flex-col gap-4 w-full px-4">
+              <TopCard title="Actividad de registros de minutas" variant="title" />
+              <TablasGenerales />  
+            </div>
+            {
+              TablaEspecialMinuta &&
+              <PrintComponent delay={4000} />
+            }
+          </div>
         }
       </div>
     </div>

@@ -16,7 +16,11 @@ const PrintComponent: FunctionComponent<PrintComponentProps> = ({
     }, delay || 0)
   }, [])
   
-  return ( undefined );
+  return ( 
+    <div className="z-50 fixed left-0 top-0 w-screen h-screen cursor-crosshair">
+
+    </div>
+   );
 }
  
 export default PrintComponent;

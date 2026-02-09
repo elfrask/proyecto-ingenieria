@@ -12,6 +12,8 @@ import { Items, SelectKeysForItems, toItems } from "@/types/form.types";
 import useUpdate from "@/hooks/useUpdate";
 import { ICustomField, ICustomFieldPre } from "@/lib/db-types";
 import Generador from "./generador-advance";
+import { openAndPrint } from "@/lib/reportes";
+import { searchConvertToParams } from "@/lib/search.lib";
 
 const DefSearch = {
   tipo: "",
@@ -110,7 +112,21 @@ const EstadisticasAvanzados: FunctionComponent<EstadisticasAvanzadosProps> = () 
           <RenderSearchDate data={search} placeholder="Seleccionar Periodo" />
         </Button>
 
-        <Button>
+        <Button
+          disabled={
+            [
+              FieldSelected?.name,
+              MinuteTypeSelected?.typeName,
+              search.modo,
+              searchConfigs.mode
+            ].some(x => !x)
+          }
+          onClick={x => openAndPrint(`/reportes/advance?${searchConvertToParams(search)}&${new URLSearchParams({
+            modeProcess: searchConfigs.mode,
+            tipo: MinuteTypeSelected?.typeName as string,
+            field: FieldSelected?.name as string
+          }).toString()}`)}
+        >
           <Printer />
           Imprimir reporte con estas configuraciones
         </Button>
