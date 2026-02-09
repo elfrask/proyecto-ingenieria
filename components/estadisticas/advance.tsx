@@ -4,7 +4,7 @@ import { useSearch } from "@/hooks/estadisticas/use-search";
 import RenderSearchDate from "../commons/render-search-date";
 import { Printer, Search } from "lucide-react";
 import FormComponent, { useFormContextComponent } from "../commons/form/providers/FormProvider";
-import z from "zod";
+import z, { number } from "zod";
 import { FormSelect } from "../commons/form/fields/_RedirectComponents";
 import { useServerQuery } from "@/hooks/get-async";
 import { getAllMinuteTypes } from "@/lib/minute-actions";
@@ -81,7 +81,18 @@ const EstadisticasAvanzados: FunctionComponent<EstadisticasAvanzadosProps> = () 
       {value: "default", label: "Por defecto"},
     ];
 
-    methods.setValue("modo", "default")
+    methods.setValue("mode", "default")
+
+    if (FieldSelected?.type === "number") {
+      ModosItems = [
+        ...ModosItems,
+        {value: "promedio", label: "Promedio"},
+        {value: "suma", label: "Sumatoria"},
+        {value: "ambos", label: "Ambos"},
+        {value: "ambos2", label: "Ambos (Separados)"},
+        // {value: "promedio", label: "Promedio"},
+      ]
+    }
 
     return {
       FieldSelected,
@@ -111,7 +122,12 @@ const EstadisticasAvanzados: FunctionComponent<EstadisticasAvanzadosProps> = () 
           name="tipo"
           label="Tipo de minuta a graficar"
           options={MinuteTypesItems}
-          onValueChange={update}
+          onValueChange={x => {
+            methods.setValue("mode", "default")
+            methods.setValue("field", "")
+      
+            update()
+          }}
         />
 
         {

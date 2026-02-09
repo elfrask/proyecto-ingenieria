@@ -122,4 +122,13 @@ export function generateGroup(search: dataResultSearch): Record<string, any[]> {
   }
 
   return out
+};
+
+
+export function sortDataList<T>(gen: [string, T][], mode: dataResultSearch["modo"]) {
+  if (mode === "mes") {
+    gen = gen.sort()
+  };
+
+  return gen
 }
