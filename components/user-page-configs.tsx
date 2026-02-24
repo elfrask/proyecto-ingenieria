@@ -15,8 +15,9 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { createUser, getAllUsers, getUser, updateUser } from "@/lib/user-actions";
 import { getSession } from "@/lib/auth";
+import { useSession } from "@/lib/auth-hook";
 
-const UserSession = await getSession();
+// const UserSession = await getSession();
 
 
 interface SelectPermissionProps extends Omit<HTML<HTMLSelectElement>, "onChange"> {
@@ -37,6 +38,7 @@ const SelectPermission: FunctionComponent<SelectPermissionProps> = ({
     disabled
 }) => {
     let disabledInput = disabled || false;
+    const UserSession = useSession();
 
 
     if (!useCustomDisabled) {
@@ -106,6 +108,7 @@ const RoleEditor: FunctionComponent<RoleEditorProps> = ({
     role
 }) => {
     const [Rol, setRol] = useState<IRole | null>(null);
+    const UserSession = useSession();
     // const [Title, setTitle] = useState("");
     function setRolPass(key: keyof IRole, value: any) {
         if (!Rol) setRol(Rol);
@@ -306,6 +309,7 @@ const UserEditor: FunctionComponent<UserEditorProps> = ({
     children,
     user
 }) => {
+    const UserSession = useSession();
     const [UserData, setUserData] = useState<IUser | null>(null);
     const [rolesList, setRolesList] = useState<IRole[]>([])
 
@@ -405,6 +409,7 @@ const UserEditor: FunctionComponent<UserEditorProps> = ({
 
 
 const RolesPage: functionLinkSectionInterface = ({ isOpen }) => {
+    const UserSession = useSession();
 
     const [newTitle, setNewTitle] = useState("")
     const [Roles, setRoles] = useState<IRole[]>([])
@@ -421,6 +426,7 @@ const RolesPage: functionLinkSectionInterface = ({ isOpen }) => {
     useEffect(() => {
         LoadData();
     }, [isOpen])
+
 
     return (
         <div className="w-full p-4 overflow-auto h-auto">
@@ -517,6 +523,7 @@ const RolesPage: functionLinkSectionInterface = ({ isOpen }) => {
 
 const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
 
+    const UserSession = useSession();
     const [newUser, setNewUser] = useState("")
     const [pass, setPass] = useState("")
     const [newRol, setNewRole] = useState("")
@@ -684,18 +691,23 @@ const UserPage: functionLinkSectionInterface = ({ isOpen }) => {
 }
 
 
+export function getUserPageConfigs() {
+    const UserSession = useSession();
+    
+    const UserPageConfigs: LinkSectionsItemProps[] = [
+        LinkSectionsItemElement(
+            "Roles de la plataforma",
+            "Gestiona los roles de la plataforma y sus permisos",
+            RolesPage
+        ),
+        LinkSectionsItemElement(
+            "Usuarios de la plataforma",
+            "Gestiona los usuarios de la plataforma y asigna los roles",
+            UserPage,
+            UserSession?.permission.users as number < 2
+        ),
+    
+    ];
 
-export const UserPageConfigs: LinkSectionsItemProps[] = [
-    LinkSectionsItemElement(
-        "Roles de la plataforma",
-        "Gestiona los roles de la plataforma y sus permisos",
-        RolesPage
-    ),
-    LinkSectionsItemElement(
-        "Usuarios de la plataforma",
-        "Gestiona los usuarios de la plataforma y asigna los roles",
-        UserPage,
-        UserSession?.permission.users as number < 2
-    ),
-
-]
+    return UserPageConfigs
+}

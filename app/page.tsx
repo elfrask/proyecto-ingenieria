@@ -15,9 +15,7 @@ export default async function Home() {
 
   return (
     <div className="w-screen h-screen flex justify-center items-center">
-      <FormLogin>
-        
-      </FormLogin>
+      <FormLogin />
     </div>
   );
 }

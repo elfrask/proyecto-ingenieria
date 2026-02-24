@@ -1,8 +1,6 @@
 "use client"
-import { MapContainer, TileLayer, Popup, useMap } from "react-leaflet";
 import React, { useEffect, useRef, useState } from "react";
-import L, { LatLngExpression } from 'leaflet'; // ¡Importa Leaflet aquí!
-import { ContextMenu, ContextMenuItem, ContextMenuTrigger, ContextMenuContent } from "./ui/context-menu";
+import type { LatLngExpression } from 'leaflet'; // ¡Importa Leaflet aquí!
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, } from "@/components/ui/dialog"
 import { IMarker } from "@/lib/db-types";
 import { createMarker, getAllMarkers, Marker as Mrk } from "@/lib/map-actions";
@@ -19,18 +17,15 @@ import { HTML, range } from "@/lib/utils";
 import * as LucideIcons from "lucide-react";
 import ConfigPage from "./config-page";
 import ButtonFloat from "./button-float";
-import { CustomMarker, MarkerData } from "./marker-components";
 import Estadisticas from "./estadisticas/estadisticas";
+import dynamic from "next/dynamic";
+import Loading from "./loading-page";
+import { useSession } from "@/lib/auth-hook";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
 // pero a menudo es buena tenerla para evitar problemas genéricos de Leaflet en Next.js)
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'leaflet/dist/images/marker-icon-2x.png',
-    iconUrl: 'leaflet/dist/images/marker-icon.png',
-    shadowUrl: 'leaflet/dist/images/marker-shadow.png',
-});
+
 
 
 
@@ -60,9 +55,19 @@ export function DialogSearchParameters({ onSearch }: propsDialogSearchParameters
 
 
 
+const MapComponent = dynamic(() => import("@/components/map-component"), {
+    loading: () => <Loading />,
+    ssr: false,
+});
+
+
+
+
 
 
 export function MainPage() {
+
+    const UserSession = useSession();
     const [markers, setMarkers] = useState<Mrk[]>([]); // Estado para guardar las posiciones de los marcadores
     const [globalMap, setGlobalMap] = useState<L.Map | null>(null);
 
@@ -153,57 +158,9 @@ export function MainPage() {
         setPeriodByMonthAndYear();
     }, [yearFilter, mouthFilter, TypeFilterTime])
 
-    function HandlerMap() {
-        const map = useMap(); // Obtiene la instancia de Leaflet Map
-        // setGlobalMap(map)
+    
 
-        useEffect(() => {
-            // Para cerrar el menú si el mapa se mueve o hace zoom
-            const closeMenuOnMapInteraction = () => {
-
-            };
-
-            setGlobalMap(map)
-            map.on('moveend', closeMenuOnMapInteraction);
-            map.on('zoomend', closeMenuOnMapInteraction);
-
-            return () => {
-                map.off('moveend', closeMenuOnMapInteraction);
-                map.off('zoomend', closeMenuOnMapInteraction);
-            };
-        }, [map]); // Dependencia: la instancia del mapa
-
-        return null;
-    }
-
-    const handleContextMenu = (event: React.MouseEvent) => {
-
-        // Es crucial que el MapContainer tenga un ID para que L.DomUtil.get funcione
-        const mapContainer = L.DomUtil.get('map-container');
-        if (!mapContainer) return;
-
-        // Obtener las coordenadas del píxel del clic dentro del contenedor del mapa
-        const mapBounds = mapContainer.getBoundingClientRect();
-        const x = event.clientX - mapBounds.left;
-        const y = event.clientY - mapBounds.top;
-
-        // Crear un punto de píxel de Leaflet
-        const pixelPoint = L.point(x, y);
-
-        // Obtener la instancia del mapa usando useMap y un ref para asegurarse de que esté disponible
-        const map = globalMap; // Acceso directo al objeto Leaflet Map
-        // (Esto es un hack; la forma recomendada es useMap())
-
-
-        if (map) {
-            // Convertir las coordenadas de píxel a coordenadas LatLng del mapa
-            const latlng = map.containerPointToLatLng(pixelPoint);
-            clickedLatLngRef.current = latlng;
-        }
-
-        // El `onOpenChange` del ContextMenu raíz controlará el `setIsContextMenuOpen(true)`
-        // aquí no es necesario llamarlo explícitamente.
-    };
+    
 
     const handleAddPoint = async (subject: string, description: string, reference: string) => {
         if (clickedLatLngRef.current) {
@@ -233,45 +190,16 @@ export function MainPage() {
     return (
         <div className="w-screen h-screen ag-theme-quartz-dark">
             <div>
-                <ContextMenu>
-                    <ContextMenuTrigger onContextMenu={handleContextMenu}>
-                        <MapContainer id="map-container" center={position} zoom={13} className="z-0 h-screen w-screen fixed left-0 top-0">
-                            <TileLayer
-                                // attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                url={"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
-                            // className="invert"
+                <MapComponent
+                    loadData={loadData}
+                    markers={markers}
+                    position={position}
+                    setCreateMarkerDialogOpen={setCreateMarkerDialogOpen}
+                    clickedLatLngRef={clickedLatLngRef}
+                    globalMap={globalMap}
+                    setGlobalMap={setGlobalMap}
+                />
 
-                            />
-
-                            <HandlerMap />
-
-                            {markers.map((marker, idx) => {
-
-
-                                return (
-                                    <CustomMarker key={idx} position={[marker.lat, marker.lng] as L.LatLngExpression}> {/* Usa tu icono personalizado o el predeterminado */}
-                                        <Popup className="w-max">
-
-                                            {/* Marcador en: <br /> Lat: {marker.lat.toFixed(4)}, Lng: {marker.lng.toFixed(4)} */}
-                                            <MarkerData {...marker} onDelete={() => loadData()} onUpdate={() => loadData()} />
-                                        </Popup>
-                                    </CustomMarker>
-                                )
-                            }
-                            )}
-
-                        </MapContainer>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent onContextMenu={x => x.preventDefault()}>
-                        <ContextMenuItem
-                            // onClick={handleAddPoint}
-                            onClick={() => { setCreateMarkerDialogOpen(true) }}
-                        >
-                            Crear marca aquí
-                        </ContextMenuItem>
-
-                    </ContextMenuContent>
-                </ContextMenu>
             </div>
             <Dialog onOpenChange={setCreateMarkerDialogOpen} open={createMarkerDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
@@ -571,19 +499,22 @@ export function MainPage() {
 
             </div>
 
-            <ButtonFloat icon="Settings" className="" size={50} bgColor="#000">
-                <DialogHeader>
-                    <DialogTitle>
-                        Configuraciones
-                    </DialogTitle>
-                    <DialogDescription>
-                        Panel de configuraciones, aquí puedes configurar todos los aspectos del sistema
-                    </DialogDescription>
-                </DialogHeader>
-                <ConfigPage />
-            </ButtonFloat>
+            {
+                UserSession?.permission.GeneralConfigs === 2 &&
+                <ButtonFloat icon="Settings" className="" size={50} position={{ bottom: 100, right: 32 }} bgColor="#000">
+                    <DialogHeader>
+                        <DialogTitle>
+                            Configuraciones
+                        </DialogTitle>
+                        <DialogDescription>
+                            Panel de configuraciones, aquí puedes configurar todos los aspectos del sistema
+                        </DialogDescription>
+                    </DialogHeader>
+                    <ConfigPage />
+                </ButtonFloat>
+            }
 
-            <ButtonFloat icon="Activity" className="" position={{ bottom: 100, right: 32 }} size={50} bgColor="#000" maxWidthDialog={1000}>
+            <ButtonFloat icon="Activity" className="" size={50} bgColor="#000" maxWidthDialog={1000}>
                 <DialogHeader>
                     <DialogTitle>
                         Generador de estadísticas

@@ -12,15 +12,15 @@ import { Tabs, TabsContent } from "./ui/tabs";
 import { InputCalendar } from "./input-calendar";
 import { updateMinuteType } from "@/lib/minute-actions";
 import { toast } from "sonner";
-import { getSession } from "@/lib/auth";
 import { getAllOriginElements, getAllOrigins } from "@/lib/origins-actions";
-const UserSession = await getSession();
+import { useSession } from "@/lib/auth-hook";
 
 export interface MinuteTypeCardProps {
     minuteType: IMinuteType
 }
 
 export function MinuteTypeCard({ minuteType }: MinuteTypeCardProps) {
+    const UserSession = useSession();
 
     const [Title, setTitle] = useState(minuteType.caption);
     const [fields, setFields] = useState<ICustomField[]>(minuteType.fields || [])

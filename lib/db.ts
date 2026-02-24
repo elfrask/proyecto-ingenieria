@@ -66,7 +66,11 @@ const MinuteSchema = new Schema({
 }, { strict: false });
 
 const RoleSchema = new Schema<IRole>({
-    name: String,
+    name: {
+        type: String,
+        required: true,
+        unique: true
+    },
     extends: String,
     title: String,
     disabled: Boolean,
@@ -81,7 +85,11 @@ const RoleSchema = new Schema<IRole>({
 const OriginSchema = new Schema<IOrigins>({
     disabled: Boolean,
     id: Number,
-    name: String,
+    name: {
+        type: String,
+        required: true,
+        unique: true
+    },
     title: String
 });
 
@@ -90,7 +98,11 @@ const OriginElementSchema = new Schema<IOriginsElement>({
     title: String,
     origins: String,
     peso: Number,
-    value: String,
+    value: {
+        type: String,
+        required: true,
+        unique: true
+    },
     disabled: Boolean
 });
 

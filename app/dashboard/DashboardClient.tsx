@@ -1,10 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
-
-const MapDashboard = dynamic(() => import("../../components/map-dashboard"), {
-  loading: () => <p>loading...</p>,
-  ssr: false,
-});
+import MapDashboard from "@/components/map-dashboard";
 
 export default function DashboardClient() {
   return <MapDashboard />;

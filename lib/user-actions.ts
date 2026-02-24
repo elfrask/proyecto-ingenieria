@@ -15,6 +15,8 @@ export async function createUser(data: IUser): Promise<ResponseRequest<IUser|nul
 
 // Actualizar un usuario por nombre
 export async function updateUser(user: string, data: Partial<Omit<IUser, "user">>): Promise<ResponseRequest<IUser|null>> {
+    delete (data as any)._id
+    console.log("update user:", user, data)
     try {
         const updated = await User.findOneAndUpdate({ user }, data, { new: true });
         if (!updated) return Response(false, null, 404, "Usuario no encontrado");

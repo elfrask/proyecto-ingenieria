@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { ChangeEvent, Dispatch, HtmlHTMLAttributes } from "react";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge"
-import {AxiosResponse} from "axios"
+import { AxiosResponse } from "axios"
 import { Decode, Encode } from "./local-storage/super-json";
 import { format } from "date-fns";
 
@@ -44,7 +44,7 @@ export function range(start: number, stop?: number, step?: number): number[] {
   return result;
 }
 
-export function caption2Name(captions:string): string {
+export function caption2Name(captions: string): string {
   return captions
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
@@ -60,42 +60,47 @@ export function caption2Name(captions:string): string {
 
 var c2n = caption2Name
 
+// export const Notify = {
+//   success: (title: string, description?: string, rich?: boolean) => { toast(title, { style: { color: "lime" }, richColors: rich, description }) },
+//   reject: (title: string, description?: string, rich?: boolean) => { toast(title, { style: { color: "crimson" }, richColors: rich, description }) },
+// };
+
 export const Notify = {
-  success:(title: string, description?: string, rich?: boolean) => {toast(title, {style:{ color: "lime"}, richColors: rich, description})},
-  reject:(title: string, description?: string, rich?: boolean) => {toast(title, {style:{ color: "crimson"}, richColors: rich, description})},
+  success: (title: string, description?: string, rich?: boolean) => { toast.success(title, { style: { color: "lime" }, richColors: rich, description }) },
+  reject: (title: string, description?: string, rich?: boolean) => { toast.error(title, { style: { color: "#ffaaaa" }, richColors: rich, description }) },
 }
 
 export interface ResponseRequest<T> {
-    msg: string,
-    error: number,
-    success: boolean,
-    result: T | null,
+  msg: string,
+  error: number,
+  success: boolean,
+  result: T | null,
 }
 
 export function Response<T>(success: boolean, result: NoInfer<T> | null, error: number = 0, msg: string = ""): ResponseRequest<T> {
-    return {
-        success,
-        result: (result),
-        error,
-        msg
-    }
+  return {
+    success,
+    result: (result),
+    error,
+    msg
+  }
 }
 
 
-export type HTML<T=HTMLDivElement> = HtmlHTMLAttributes<T>;
+export type HTML<T = HTMLDivElement> = HtmlHTMLAttributes<T>;
 export type typeValues = "text" | "number" | "date";
 
 
 export function StateInput<T = any>(value: T, setValue: Dispatch<T>) {
-  
+
   return {
     useInput: (
-      key: keyof T, 
+      key: keyof T,
       typeValue: typeValues = "text",
-      useOnChangeValue?: boolean, 
+      useOnChangeValue?: boolean,
     ) => {
 
-      function setState(_value: any, element: ChangeEvent<HTMLInputElement>|null) {
+      function setState(_value: any, element: ChangeEvent<HTMLInputElement> | null) {
 
         if (typeValue == "number") {
           if (element) _value = element?.target.valueAsNumber as number;
@@ -105,29 +110,53 @@ export function StateInput<T = any>(value: T, setValue: Dispatch<T>) {
           else _value = new Date(_value);
         }
 
-        setValue({...value, [key]: _value })
+        setValue({ ...value, [key]: _value })
 
-        
+
       }
 
       if (useOnChangeValue) {
         return {
-          value: value[key]||"",
+          value: value[key] || "",
           onChangeValue: (e: HTML<HTMLInputElement>) => { setState(e, null) }
         }
       } else {
         return {
-          value: value[key]||"",
+          value: value[key] || "",
           onChange: (e: ChangeEvent<HTMLInputElement>) => { setState(e.target.value, e) }
         }
       }
-    } 
+    }
   }
 }
 
 
-export function Class2Json<T=any>(Obj: any): T {
-  return Decode(Encode(Obj))
+export function Class2Json<T = any>(Obj: any): T {
+
+  if (Array.isArray(Obj)) {
+    return Obj.map(x => {
+
+      const e = Decode(Encode(x));
+
+      if (e._doc) {
+        return e._doc;
+      };
+
+      return e
+
+    }) as T
+  };
+
+
+  const e = Decode(Encode(Obj));
+
+  if (e._doc) {
+    return e._doc;
+  };
+
+  return e
+
+  // return Decode(Encode(Obj))
   // return JSON.parse(JSON.stringify(Obj))
 }
 
@@ -218,8 +247,8 @@ export const clearTemporalsForms = (all: any) => {
 }
 
 
-export function generarCodigo<T extends {codigo?: string}>(obj: T, key?: keyof T) {
-  
+export function generarCodigo<T extends { codigo?: string }>(obj: T, key?: keyof T) {
+
   const k = key || "codigo";
 
   obj[k] = (obj[k] || crypto.randomUUID()) as T[keyof T] & T["codigo"]
@@ -232,9 +261,9 @@ export type AxiosResponseServer<T> = AxiosResponse<IDataResultServer<T>>
 
 
 export interface IMeta {
-	current_page: number;
-	per_page: number;
-	total: number;
+  current_page: number;
+  per_page: number;
+  total: number;
 }
 
 export interface IDataResultServer<T> {

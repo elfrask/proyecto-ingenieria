@@ -70,7 +70,7 @@ export async function getSession(): Promise<Session | null> {
       )
     }
 
-    return {...session, pass: undefined, permission: (Role as IRole).permission} as Session;
+    return {...session, pass: undefined, permission: (Role as IRole).permission || {}} as Session;
   } catch {
     return null;
   }

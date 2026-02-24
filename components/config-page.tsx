@@ -1,7 +1,6 @@
 "use client"
 import { caption2Name, cn } from "@/lib/utils";
 import { FC, HTMLAttributes, HtmlHTMLAttributes, ReactNode, useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
 import { ExternalLink, Pencil, PlusCircle, Save, Trash2 } from "lucide-react";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
@@ -12,11 +11,10 @@ import { IMinuteType } from "@/lib/db-types";
 import { createMinuteType, getAllMinuteTypes } from "@/lib/minute-actions";
 import { toast } from "sonner";
 import { MinuteTypeCard } from "./custom-fields";
-import { UserPageConfigs } from "./user-page-configs";
-import { getSession } from "@/lib/auth";
 import { OriginStringsOptions } from "./origins-string-componets";
+import { useSession } from "@/lib/auth-hook";
+import { getUserPageConfigs } from "./user-page-configs";
 
-const UserSession = await getSession();
 
 
 export type functionLinkSectionInterface = (props: { isOpen: boolean }) => ReactNode
@@ -53,7 +51,8 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
         "Configuraciones de minutas",
         "aquí puedes configurar las minutas, personalizar los campos y crear tipos de minutas",
         (isOpen) => {
-
+            const UserSession = useSession();
+            
             const [newTypeName, setNewTypeName] = useState("")
             const [typeMinutesList, setTypeMinutesList] = useState<IMinuteType[]>([])
 
@@ -172,7 +171,7 @@ const GlobalConfigs: LinkSectionsItemProps[] = [
         "Configuración de usuarios y roles",
         "Crea y gestiona los usuarios de la plataforma, roles, permisos y mas",
         ({ isOpen }) => {
-
+            const UserPageConfigs = getUserPageConfigs();
             return (
                 <div className="w-full p-4 space-y-2">
                     {
@@ -261,7 +260,7 @@ export default function ConfigPage({ children, className }: ConfigPageProps) {
         <div className={cn(`
         
         `, className)}>
-            <Tabs defaultValue="userConfig">
+            {/* <Tabs defaultValue="userConfig">
                 <TabsList>
                     <TabsTrigger value="userConfig">
                         Conf. de usuario
@@ -279,22 +278,23 @@ export default function ConfigPage({ children, className }: ConfigPageProps) {
 
                 </TabsList>
                 <TabsContent value="globalConfig">
-                    <div className="
-                    w-full h-max overflow-auto flex flex-col space-y-2
-                    *:w-full *:flex *:justify-between *:border-b
-                    *:hover:bg-accent *:text-white
-                    ">
-                        {
-                            GlobalConfigs.map(x => {
-
-                                return (
-                                    <LinkElement title={x.title} disabled={x.disabled} description={x.description} content={x.content} />
-                                )
-                            })
-                        }
-                    </div>
                 </TabsContent>
-            </Tabs>
+                <TabsContent value=""></TabsContent>
+            </Tabs> */}
+            <div className="
+            w-full h-max overflow-auto flex flex-col space-y-2
+            *:w-full *:flex *:justify-between *:border-b
+            *:hover:bg-accent *:text-white
+            ">
+                {
+                    GlobalConfigs.map((x, y) => {
+
+                        return (
+                            <LinkElement key={y} title={x.title} disabled={x.disabled} description={x.description} content={x.content} />
+                        )
+                    })
+                }
+            </div>
         </div>
     )
 }
