@@ -15,6 +15,8 @@ export async function createRole(data: IRole): Promise<ResponseRequest<IRole | n
 
 // Actualizar un rol por nombre
 export async function updateRole(name: string, data: Partial<Omit<IRole, "name">>): Promise<ResponseRequest<IRole | null>> {
+    delete (data as any)._id
+
     try {
         const role = await Role.findOneAndUpdate({ name }, data, { new: true });
         if (!role) return Response(false, null, 404, "Rol no encontrado");

@@ -21,6 +21,7 @@ import Estadisticas from "./estadisticas/estadisticas";
 import dynamic from "next/dynamic";
 import Loading from "./loading-page";
 import { useSession } from "@/lib/auth-hook";
+import usePlatform from "@/hooks/use-platform";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
@@ -68,8 +69,11 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
 export function MainPage() {
 
     const UserSession = useSession();
+    const platform = usePlatform();
     const [markers, setMarkers] = useState<Mrk[]>([]); // Estado para guardar las posiciones de los marcadores
     const [globalMap, setGlobalMap] = useState<L.Map | null>(null);
+
+    // console.log(platform)
 
     const [TypeFilterTime, setTypeFilterTime] = useState<"mouth" | "day" | "period" | "year" | "all">("day")
     const thisDate = new Date();
@@ -498,33 +502,38 @@ export function MainPage() {
                 </div>
 
             </div>
-
             {
-                UserSession?.permission.GeneralConfigs === 2 &&
-                <ButtonFloat icon="Settings" className="" size={50} position={{ bottom: 100, right: 32 }} bgColor="#000">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Configuraciones
-                        </DialogTitle>
-                        <DialogDescription>
-                            Panel de configuraciones, aquí puedes configurar todos los aspectos del sistema
-                        </DialogDescription>
-                    </DialogHeader>
-                    <ConfigPage />
-                </ButtonFloat>
-            }
+                (!platform.isAndroid) && (platform.current !== "loading") &&
+                <>
+                    {
+                        UserSession?.permission.GeneralConfigs === 2 &&
+                        <ButtonFloat icon="Settings" className="" size={50} position={{ bottom: 100, right: 32 }} bgColor="#000">
+                            <DialogHeader>
+                                <DialogTitle>
+                                    Configuraciones
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Panel de configuraciones, aquí puedes configurar todos los aspectos del sistema
+                                </DialogDescription>
+                            </DialogHeader>
+                            <ConfigPage />
+                        </ButtonFloat>
+                    }
 
-            <ButtonFloat icon="Activity" className="" size={50} bgColor="#000" maxWidthDialog={1000}>
-                <DialogHeader>
-                    <DialogTitle>
-                        Generador de estadísticas
-                    </DialogTitle>
-                    <DialogDescription>
-                        Panel de generar las estadísticas y reportes del sistema
-                    </DialogDescription>
-                </DialogHeader>
-                <Estadisticas />
-            </ButtonFloat>
+                    <ButtonFloat icon="Activity" className="" size={50} bgColor="#000" maxWidthDialog={1000}>
+                        <DialogHeader>
+                            <DialogTitle>
+                                Generador de estadísticas
+                            </DialogTitle>
+                            <DialogDescription>
+                                Panel de generar las estadísticas y reportes del sistema
+                            </DialogDescription>
+                        </DialogHeader>
+                        <Estadisticas />
+                    </ButtonFloat>
+                
+                </>
+            }
         </div>
     )
 }
