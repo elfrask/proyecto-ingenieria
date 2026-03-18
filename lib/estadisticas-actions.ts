@@ -20,7 +20,8 @@ export interface EstadisticaResultado {
   markers: IMarker[];
   campo: ICustomField;
   origins: IOriginsElement[];
-  tipoMinuta: IMinuteType
+  everyFieldsOrigins: Record<string, IOriginsElement[]>;
+  tipoMinuta: IMinuteType;
 }
 
 
@@ -38,6 +39,7 @@ export async function getAdvanceEstadistica(
     if (!Tipo) return Response(false, null, -2, "El Tipo de minuta seleccionado no existe");
     const Campo = Tipo.fields.find(x => x.name === field);
     if (!Campo) return Response(false, null, -3, "El Campo seleccionado del tipo de minuta seleccionado no existe");
+    let origenes: Record<string, IOriginsElement[]> = {};
 
     const Markers = (await getAllMarkers(search.modo === "todo" ? {} : {
       report_date: {
@@ -78,6 +80,16 @@ export async function getAdvanceEstadistica(
       }
     }
 
+    for (let field of Tipo.fields) {
+      if (field.type === "select") {
+      let ori = (await getAllOriginElements(field.origin as string)).result;
+      if (ori) {
+        origenes[field.name] = ori;
+        
+      }
+    }
+    }
+
 
 
 
@@ -88,6 +100,7 @@ export async function getAdvanceEstadistica(
       campo: Campo,
       tipoMinuta: Tipo,
       origins,
+      everyFieldsOrigins: origenes
     }, 0, "ok")
   } catch (error) {
     return Response(false, null, -1, "error al parseo")

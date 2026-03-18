@@ -11,13 +11,23 @@ import { ActionButtonVerDetalles } from './simpleActionsButtons/detalles-button'
 import { Input } from '@/components/ui/input';
 import { usePreserve } from '@/hooks/usePreserve';
 import { range } from 'lodash';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export type TypeCell = ReactNode
 export type RenderTable<T = any, U = any, ctx = any> = (value: T, row: U, index: number, ctx: ctx, ...p: any[]) => TypeCell
 
+function LabelEnvuelto(label: ReactNode) {
+  return (
+    <Tooltip delayDuration={500}>
+      <TooltipTrigger className='truncate w-full cursor-pointer'>{typeof label === "string" ? label.toUpperCase() : label}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 export function columnConvert<ctx>(x: ColumTable, context: ctx): ColDef {
   return {
-    headerName: (typeof x.label === "function" ? x.label(context) : x.label) as string,
+    headerName: (typeof x.label === "function" ? x.label(context) : LabelEnvuelto(x.label)) as string,
     field: x.key,
     cellRenderer: x.render ? ((params: CustomCellRendererProps & ICellRendererParams) => {
       if (x.render) {

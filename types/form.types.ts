@@ -43,7 +43,7 @@ export function parseItemKey<T>(obj: T, key: keyof T | ((V: T) => string)): stri
 export function toItems<T>(list: T[], { label, value, disabled }: SelectKeysForItems<T>) {
 
 
-  const i: Items[] = list.map(x => ({
+  const i: Items[] = list?.map(x => ({
     label: parseItemKey(x, label),
     value: parseItemKey(x, value),
     disabled: disabled && !parseItemKey(x, disabled) as boolean,

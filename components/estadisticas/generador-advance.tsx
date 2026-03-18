@@ -19,6 +19,8 @@ import { Separator } from "../ui/separator";
 import StaticReportTable from "../commons/table/static-table";
 import { refineColumn } from "../commons/table/lib";
 import PrintComponent from "@/app/reportes/print";
+import { generateTableList, renderTableItems, renderTableList } from "../commons/table/renders/list-items";
+import { toItems } from "@/types/form.types";
 
 
 interface GeneradorProps {
@@ -210,6 +212,8 @@ const Generador: FunctionComponent<GeneradorProps> = ({
     }
   );
 
+  console.log(req.data?.everyFieldsOrigins)
+
   let fieldTitle = req?.data?.campo?.caption;
   let fieldType = req?.data?.campo?.type;
 
@@ -354,7 +358,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
 
   // Tablas
 
-  const { TablaMinutas, TablaEspecialMinuta } = useMemo(() => {
+  const { TablaMinutas, TablaEspecialMinuta, ColumnasGeneral, generalRowData } = useMemo(() => {
     const minutes = req?.data?.minutes
     const origins = req.data?.origins;
     const KeyOrigins: Record<string, string> = {};
@@ -362,6 +366,31 @@ const Generador: FunctionComponent<GeneradorProps> = ({
     origins?.forEach(x => {
       KeyOrigins[x.value] = x.title;
     });
+
+    const ColumnasGeneral: ColumTable[] = [
+      {key: "title", label: "Titulo Minuta"},
+    ];
+
+    // console.trace("aqui")
+
+    req.data?.tipoMinuta.fields.forEach(x => {
+      if (x.type === "date") {
+        ColumnasGeneral.push({key: x.name, label: x.caption, render: renderTableDate})
+        return
+      };
+      if (x.type === "select") {
+        ColumnasGeneral.push({key: x.name, label: x.caption, render: renderTableItems(toItems(req.data?.everyFieldsOrigins[x.name] || [], {
+          value: "value",
+          label: "title"
+        }), "No Seleccionado")})
+        return
+      };
+      
+      
+      ColumnasGeneral.push({key: x.name, label: x.caption});
+    })
+
+    
 
 
     return {
@@ -391,7 +420,15 @@ const Generador: FunctionComponent<GeneradorProps> = ({
           report_date: new Date(x.report_date),
           field: out_field,
         }
-      }) as ITablaMinutaEspecial[]
+      }) as ITablaMinutaEspecial[],
+      ColumnasGeneral,
+      generalRowData: req.data?.minutes?.map(x => {
+
+        return {
+          title: x.title,
+          ...x.fields
+        }
+      })
 
     }
   }, [req.data?.minutes])
@@ -407,7 +444,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
         <TopCard title="Actividad cronológica" variant="light" />
         {
           grupos &&
-          <TableComponent
+          <TTable
             columns={generalTablaGrupos}
             data={grupos}
           />
@@ -417,7 +454,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
         <TopCard title="Tabla de las minutas operadas" variant="light" />
         {
           TablaMinutas &&
-          <TableComponent
+          <TTable
             columns={generalColumns}
             data={TablaMinutas}
           />
@@ -440,7 +477,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
           req.data?.campo?.type === "select" &&
           <>
             <TopCard title={"Distribución de la selección en " + fieldTitle} variant="light" />
-            <TableComponent
+            <TTable
               columns={TablaDistribucionColumnas}
               data={select.distribucion.data}
             />
@@ -452,7 +489,7 @@ const Generador: FunctionComponent<GeneradorProps> = ({
           req.data?.campo?.type === "number" && numGrupos &&
           <>
             <TopCard title={"Sumatorias y promedios de " + fieldTitle} variant="light" />
-            <TableComponent
+            <TTable
               columns={TablaCalculoNumericoColums}
               data={numGrupos}
             />
@@ -463,12 +500,27 @@ const Generador: FunctionComponent<GeneradorProps> = ({
         <TopCard title={"Tabla recopilatoria de minutas con el campo de " + fieldTitle} variant="light" />
         {
           TablaEspecialMinuta &&
-          <TableComponent
+          <TTable
             columns={TablaColumsEspecial}
             data={TablaEspecialMinuta}
           />
         }
 
+      </>
+    )
+  }
+
+  function TablasGeneralCampos() {
+    
+
+    return (
+      <>
+        <TopCard title="General: Todos los campos de cada minuta" variant="title" />
+        <TTable 
+          data={generalRowData||[]}
+          columns={ColumnasGeneral}
+        
+        />
       </>
     )
   }
@@ -611,6 +663,9 @@ const Generador: FunctionComponent<GeneradorProps> = ({
                 <TabsTrigger value="especial">
                   Resumen de Datos de los campos
                 </TabsTrigger>
+                <TabsTrigger value="todo">
+                  General
+                </TabsTrigger>
               </TabsList>
               <Card>
                 <CardContent>
@@ -624,6 +679,10 @@ const Generador: FunctionComponent<GeneradorProps> = ({
                   <TabsContent value="especial" className="flex flex-col gap-4">
                     <TablasEspeciales />
                   </TabsContent>
+                  <TabsContent value="todo" className="flex flex-col gap-4">
+                    <TablasGeneralCampos />
+                  </TabsContent>
+                  
 
                 </CardContent>
               </Card>
@@ -644,6 +703,14 @@ const Generador: FunctionComponent<GeneradorProps> = ({
               <TopCard title="Actividad de registros de minutas" variant="title" />
               <TablasGenerales />  
             </div>
+
+            <Separator />
+
+            <div className="flex flex-col gap-4 w-full px-4">
+              {/* <TopCard title="General: Todos los campos de cada minuta" variant="title" /> */}
+              <TablasGeneralCampos />  
+            </div>
+
             {
               TablaEspecialMinuta &&
               <PrintComponent delay={4000} />
