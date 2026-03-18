@@ -9,6 +9,7 @@ import { getAllOriginElements, getOriginById } from "./origins-actions";
 export interface IMinuteEstadistica extends IMinute {
   report_date: Date;
   title_marker: string;
+  reference: string;
 }
 
 
@@ -60,7 +61,8 @@ export async function getAdvanceEstadistica(
         AllMinutes.push({
           ...x,
           report_date: new Date(i.report_date),
-          title_marker: i.subject as string
+          title_marker: i.subject as string,
+          reference: i.reference as string
         })
       })
 

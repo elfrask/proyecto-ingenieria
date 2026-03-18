@@ -81,6 +81,7 @@ interface TablaGeneral {
   marker: string;
   report_date: Date;
   title: string;
+  reference: string
 
 }
 
@@ -93,6 +94,10 @@ const generalColumns: ColumTable<TablaGeneral>[] = [
     key: "report_date",
     label: "Fecha de registro",
     render: renderTableDate
+  },
+  {
+    key: "reference",
+    label: "Direccion/Referencia",
   },
   {
     key: "title",
@@ -397,7 +402,8 @@ const Generador: FunctionComponent<GeneradorProps> = ({
       TablaMinutas: minutes?.map(x => ({
         marker: x.title_marker,
         report_date: new Date(x.report_date),
-        title: x.title as string
+        title: x.title as string,
+        reference: x.reference || "No descrito",
       }) as TablaGeneral),
       TablaEspecialMinuta: minutes?.map((x) => {
         let out_field = ""
