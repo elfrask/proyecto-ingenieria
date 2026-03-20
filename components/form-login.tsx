@@ -13,6 +13,9 @@ import logoPC from "../public/logo.png";
 import { login } from "@/lib/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import ButtonFloat from "./button-float";
+import { DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import Ayuda from "./help-page";
 
 export default function FormLogin() {
   const [user, setUser] = useState("");
@@ -37,40 +40,40 @@ export default function FormLogin() {
         className="flex flex-col gap-4 space-y-1"
         autoComplete="off"
         onSubmit={async e => {
-            setLoading(true)
+          setLoading(true)
           e.preventDefault();
 
           console.log(user, pass)
 
           try {
-              const result = await login(user, pass)
+            const result = await login(user, pass)
 
-              if (result.success) {
-                toast("Haz iniciado session correctamente", {
-                    description: result.msg,
-                    className: "text-green-300"
-                })
+            if (result.success) {
+              toast("Haz iniciado session correctamente", {
+                description: result.msg,
+                className: "text-green-300"
+              })
 
-                setTimeout(() => {
-                    route.push("/dashboard")
-                }, 1000)
-              } else {
-                setLoading(false)
-                toast("Hubo un problema al intentar iniciar session",{
-                    description: result.msg,
-                    className:"text-red-400",
-                })
-              }
+              setTimeout(() => {
+                route.push("/dashboard")
+              }, 1000)
+            } else {
+              setLoading(false)
+              toast("Hubo un problema al intentar iniciar session", {
+                description: result.msg,
+                className: "text-red-400",
+              })
+            }
 
           } catch (error) {
-                setLoading(false)
-                toast("Hubo un problema al intentar iniciar session",{
-                    description: error as string,
-                    className:"text-red-400",
-                })
+            setLoading(false)
+            toast("Hubo un problema al intentar iniciar session", {
+              description: error as string,
+              className: "text-red-400",
+            })
           }
 
-          
+
           // Aquí procesarás los datos del formulario
         }}
       >
@@ -96,6 +99,17 @@ export default function FormLogin() {
         />
         <Button type="submit" disabled={loading} className="w-full mt-2">Entrar</Button>
       </form>
+      <ButtonFloat icon="HelpCircle" className="" size={50} bgColor="#000" maxWidthDialog={1000}>
+        <DialogHeader>
+          <DialogTitle>
+            Manual de usuario y planes de mantenimiento
+          </DialogTitle>
+          <DialogDescription>
+            Manual de usuario y planes de mantenimiento, desarrollo, actualizaciones
+          </DialogDescription>
+        </DialogHeader>
+        <Ayuda />
+      </ButtonFloat>
     </Card>
   );
 }

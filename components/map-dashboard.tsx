@@ -22,6 +22,7 @@ import dynamic from "next/dynamic";
 import Loading from "./loading-page";
 import { useSession } from "@/lib/auth-hook";
 import usePlatform from "@/hooks/use-platform";
+import Ayuda from "./help-page";
 
 // Opcional: Lógica para corregir los íconos predeterminados si aún los necesitas o para evitar conflictos
 // (Si solo usas íconos personalizados, esta parte podría ser menos crítica,
@@ -507,7 +508,7 @@ export function MainPage() {
                 <>
                     {
                         UserSession?.permission.GeneralConfigs === 2 &&
-                        <ButtonFloat icon="Settings" className="" size={50} position={{ bottom: 100, right: 32 }} bgColor="#000">
+                        <ButtonFloat icon="Settings" className="" size={50} position={{ bottom: 150, right: 32 }} bgColor="#000">
                             <DialogHeader>
                                 <DialogTitle>
                                     Configuraciones
@@ -520,7 +521,7 @@ export function MainPage() {
                         </ButtonFloat>
                     }
 
-                    <ButtonFloat icon="Activity" className="" size={50} bgColor="#000" maxWidthDialog={1000}>
+                    <ButtonFloat icon="Activity" className="" size={50} position={{ bottom: 90, right: 32 }} bgColor="#000" maxWidthDialog={1000}>
                         <DialogHeader>
                             <DialogTitle>
                                 Generador de estadísticas
@@ -530,6 +531,18 @@ export function MainPage() {
                             </DialogDescription>
                         </DialogHeader>
                         <Estadisticas />
+                    </ButtonFloat>
+
+                    <ButtonFloat icon="HelpCircle" className="" size={50} bgColor="#000" maxWidthDialog={1000}>
+                        <DialogHeader>
+                            <DialogTitle>
+                                Manual de usuario y planes de mantenimiento
+                            </DialogTitle>
+                            <DialogDescription>
+                                Manual de usuario y planes de mantenimiento, desarrollo, actualizaciones
+                            </DialogDescription>
+                        </DialogHeader>
+                        <Ayuda />
                     </ButtonFloat>
                 
                 </>

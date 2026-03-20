@@ -93,7 +93,7 @@ const FormDynamicComponent: FunctionComponent<FormDynamicComponentProps> = ({
 
 
   return (
-    <FormComponent schema={schema} key={"12"} formLess>
+    <FormComponent schema={schema as any} key={"12"} formLess>
       {bind && <LogicForm m={parentForm} n={name} fields={configs.fields} />}
       <Render
         fields={configs.fields}
